@@ -1,0 +1,111 @@
+\documentclass[]{article}
+\usepackage[left=0.7in,right=0.7in,top=0.9in,bottom=0.5in]{geometry}
+\usepackage{listings}
+\usepackage{amsmath}
+%opening
+
+\lstset{
+	language=[x86masm]Assembler
+}
+
+\title{\textbf{\centerline{CSL216: Assignment 1} \newline Getting Familiar with ARMSim Simulator}}
+\author{Sahil Bansal (2016CSJ0008)}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\large
+In this assignment, an assembly program is provided in which the energy and latency(time taken in clock cycles) is specified for each instruction. To analyze the performance of the program, we need to calculate the Cycles per instruction (CPI), total energy and average power dissipation. The no. of instructions are displayed in the output screen of the simulator which have also been calculated manually and found to be the same. Then, latency for the entire program is calculated and CPI is thus calcuated. Total energy is found similarly. To calculate the avg. power, we find the execution time of the program by using the clock frequency(1 GHz) and then divide total energy by it.
+\large
+\end{abstract}
+
+\section{Assembly Instructions Table}
+\large
+\begin{center}
+	\begin{tabular}{ |p{0.6cm}|l||p{1.5cm}|p{1cm}|p{1.5cm}|p{1.25cm}|p{2cm}||  }
+		\hline
+			Line No & Assembly Instruction	&	Latency (cycles)	&	Times executed	&	Total cycles	&	Energy\newline(pJ)	&	Total Energy(\textbf{nJ})	\\
+		\hline
+		12 & \begin{lstlisting}
+		mov r1, #1000
+		\end{lstlisting}&1&1&1&100&0.100	\\
+		13 & \begin{lstlisting}
+		mov r2, #1
+		\end{lstlisting}&1&1&1&100&0.100	\\
+		14 & \begin{lstlisting}
+		ldr r3, =AA
+		\end{lstlisting}&1&1&1&110&0.110	\\
+		17 & \begin{lstlisting}
+		str r2, [r3]
+		\end{lstlisting}&20&1000&20000&2000&2000 \\
+		18 & \begin{lstlisting}
+		add r3, r3, #4
+		\end{lstlisting}&1&1000&1000&100&100 \\
+		19 & \begin{lstlisting}
+		add r2, r2, #1
+		\end{lstlisting}&1&1000&1000&100&100 \\
+		20 & \begin{lstlisting}
+		sub r1, r1, #1
+		\end{lstlisting}&1&1000&1000&100&100 \\
+		21 & \begin{lstlisting}
+		cmp r1, #0
+		\end{lstlisting}&1&1000&1000&100&100 \\
+		22 & \begin{lstlisting}
+		bne StoreIntegers
+		\end{lstlisting}&2&1000&2000&180&180 \\
+		30 & \begin{lstlisting}
+		mov r1, #1000
+		\end{lstlisting}&1&1&1&100&0.100	\\
+		31 & \begin{lstlisting}
+		mov r4, #0
+		\end{lstlisting}&1&1&1&100&0.100	\\
+		32 & \begin{lstlisting}
+		ldr r3, =AA
+		\end{lstlisting}&1&1&1&110&0.110	\\
+		34 & \begin{lstlisting}
+		ldr r2, [r3]
+		\end{lstlisting}&20&1000&20000&2000&2000 \\
+		35 & \begin{lstlisting}
+		add r4, r4, r2 
+		\end{lstlisting}&1&1000&1000&100&100 \\
+		36 & \begin{lstlisting}
+		add r3, r3, #4
+		\end{lstlisting}&1&1000&1000&100&100 \\
+		37 & \begin{lstlisting}
+		sub r1, r1, #1
+		\end{lstlisting}&1&1000&1000&100&100 \\
+		38 & \begin{lstlisting}
+		cmp r1, #0
+		\end{lstlisting}&1&1000&1000&100&100 \\
+		39 & \begin{lstlisting}
+		bne LoadAddIntegers
+		\end{lstlisting}&2&1000&2000&180&180 \\
+		41 & \begin{lstlisting}
+		swi SWI_Exit
+		\end{lstlisting}&100&1&100&10000&10\\
+		\hline \multicolumn{2}{|r||}{TOTAL}&&12007&52106&&5170.620 \\
+		\hline
+	\end{tabular} 
+\end{center}
+\section{Cycles Per Instruction (CPI)}
+\Large
+The average value of CPI is calculated as follows :
+\[CPI = \frac{Total\ CPU\ clock\ cycles}{Instruction\ count} = \frac{52106}{12007} = \boxed{4.34 \frac{cycles}{instruction}}\]
+
+\section{Total energy}
+\Large
+The total energy is straight forward to tell, as calculated in the table : 
+\[Total\ Energy = \boxed{5.17\ \mu J}\]
+
+\section{Average power dissipation}
+\Large
+Execution time of program is required to calculate it, which is :
+\[CPU\ Execution\ Time = \frac{Total\ Clock\ Cycles}{Clock\ Frequency} = \frac{52106\ cycles}{10^{9}\ cycles/s} = \boxed{52.1\ \mu s}\]
+
+So, average power is given by :
+\[Avg\ Power = \frac{Total\ Energy}{Total\ Execution\ Time} = \frac{5.17\ \mu J}{52.1\ \mu s} = \boxed{0.099\ W}\]
+
+\end{document}
