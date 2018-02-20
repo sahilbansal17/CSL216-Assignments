@@ -22,34 +22,67 @@ openInputFile:
 	str r0, [r1]					; save the input file handle
 
 readFromFile:
-	swi SWI_RdInt		; read int from file, r0 already contains file handle
-	bcs ReadError		@ the integer is now stored in r0
-	mov r1, r0			; move the value read to r1
-	mov r0, #1			; to print the int to stdout
-	swi SWI_PrInt		; prints value in r1 to stdout
+	ldr r1,=start_state	;	destination address in r1
+	mov r2,#4				; maximum no of bytes to store into memory
+	swi SWI_RdStr		; read string from file, r0 already contains file handle
+	bcs ReadError		@ the string is now stored at start_state, r0 contains the bytes stored
+	ldr r0,=start_state ; r0 contains the start_state's address
+	swi SWI_DpStr		; display start_state's value on stdout
 
 closeInputFile:
 	ldr r0,=InFileHandle
 	ldr r0,[r0]
 	swi SWI_Close
 
+openOutputFile:
+	ldr r0,=OutFileName
+	mov r1,#1						; mode of opening the file is output mode
+	swi SWI_Open
+	bcs OutFileError
+	ldr r1,=OutFileHandle
+	str r0,[r1]
+
+printToFile:
+	ldr r1,=start_state	;
+	swi SWI_PrStr ; print string to the file
+	bcs WriteError
+
+closeOutputFile:
+	ldr r0,=OutFileHandle
+	ldr r0,[r0]
+	swi SWI_Close
+
 @ Stops the program
+Exit:
 swi SWI_Exit
 
 InFileError:
 	ldr r0,=InFileErrorMsg
 	swi SWI_DpStr
+	b Exit
+
+OutFileError:
+	ldr r0,=OutFileErrorMsg
+	swi SWI_DpStr
+	b Exit
 
 ReadError:
 	ldr r0,=ReadErrorMsg
 	swi SWI_DpStr
+	b Exit
+
+WriteError:
+	ldr r0,=WriteErrorMsg
+	swi SWI_DpStr
+	b Exit
 
 .data	/* data used by the program including read only variables/constants */
+start_state:	.skip 5	@5 bytes allocated since input would be atmost 4 char long
 InFileName: .asciz "in.txt"	@used to initialize string
 InFileHandle: .word 0	@used to initialize integer variables
 OutFileName: .asciz "out.txt"
 OutFileHandle: .word 0
-FileTest:	.asciz "The file was properly accessed.\n"
 InFileErrorMsg: .asciz "Unable to open input file\n"
 OutFileErrorMsg: .asciz "Unable to open output file\n"
 ReadErrorMsg: .asciz "Unable to read from the input file\n"
+WriteErrorMsg: .asciz "Unable to write to the output file\n"
