@@ -12,34 +12,44 @@
 .equ SWI_RdInt, 0x6c
 .equ SWI_Timer, 0x6d
 
-@ display character A on stdout
-displayA:
-  mov r0,#'A      @ moves character A to register r0
-  swi SWI_PrChr   @ print the char on stdout
-  mov r0,#'\n     @ moves null character to register r0
-  swi SWI_PrChr   @ prints the null char on stdout
+.text /* includes all the instructions */
+openInputFile:
+	ldr r0,=InFileName	; set name for the input file
+	mov r1,#0 					; mode of opening the file is input mode
+	swi SWI_Open				; open the file and return the handle to r0 if successful or set the carry bit if error occured
+	bcs InFileError			; branch if carry is set (i.e. error)
+	ldr r1,=InFileHandle	; load input file handle
+	str r0, [r1]					; save the input file handle
 
-@ display string on stdout
-displayMyString:
-  ldr r0,=MyString  @ load the address of label MyString to register r0
-  swi SWI_DpStr     @ display the string on stdout
+readFromFile:
+	swi SWI_RdInt		; read int from file, r0 already contains file handle
+	bcs ReadError		@ the integer is now stored in r0
+	mov r1, r0			; move the value read to r1
+	mov r0, #1			; to print the int to stdout
+	swi SWI_PrInt		; prints value in r1 to stdout
 
-@ allocate block of memory on heap and write some value on it
-allocateMem:
-  mov r0, #28         @ moves constant 28 to register r0
-  swi SWI_MeAlloc     @ allocate memory of 28 bytes and store its address in register r0
-  ldr r1,=MyAddress   @ load the address of label MyAddress to register r1
-  str r0,[r1]         @ store the values of register r0 (address of 28 byte memory) to address stored in register r1
-  mov r2, #8
-  str r2,[r0]
-
-@ deallocate memory
-deallocateMem:
-  swi SWI_DAlloc
-
-@ labels, symbol table
-MyString: .asciz "Hello There\n"
-MyAddress: .word 34
+closeInputFile:
+	ldr r0,=InFileHandle
+	ldr r0,[r0]
+	swi SWI_Close
 
 @ Stops the program
 swi SWI_Exit
+
+InFileError:
+	ldr r0,=InFileErrorMsg
+	swi SWI_DpStr
+
+ReadError:
+	ldr r0,=ReadErrorMsg
+	swi SWI_DpStr
+
+.data	/* data used by the program including read only variables/constants */
+InFileName: .asciz "in.txt"	@used to initialize string
+InFileHandle: .word 0	@used to initialize integer variables
+OutFileName: .asciz "out.txt"
+OutFileHandle: .word 0
+FileTest:	.asciz "The file was properly accessed.\n"
+InFileErrorMsg: .asciz "Unable to open input file\n"
+OutFileErrorMsg: .asciz "Unable to open output file\n"
+ReadErrorMsg: .asciz "Unable to read from the input file\n"
