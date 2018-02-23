@@ -23,28 +23,26 @@ openInputFile:
 
 ldr r3,=start_state  ; load the address of start_state in r3
 
-; readFromFile:
-; 	ldr r0,=InFileHandle 	; load the input file handle address
-; 	ldr r0,[r0]						; load the value of input file handle
-; 	mov r1,r3							;	destination address in r1
-; 	; add r3,r3,#1 					; increment address by 1
-; 	mov r2,#4						; maximum no of bytes to store into memory
-; 	swi SWI_RdStr					; read string from file, r0 already contains file handle
-; 	bcs closeInputFile		@ the string is now stored at start_state, r0 contains the bytes stored
-; 	ldr r0,=start_state 	; r0 contains the start_state's address
-; 	swi SWI_DpStr					; display start_state's value on stdout
-; 	; mov r0,#1
-; 	; mov r1,
-; 	; swi SWI_PrChr
-; 	bal readFromFile
+readFromFile:
+	ldr r0,=InFileHandle 	; load the input file handle address
+	ldr r0,[r0]						; load the value of input file handle
+	mov r1,r3							;	destination address in r1
+	mov r2,#4							; no of bytes to read
+	swi SWI_RdStr					; read string from file, r0 already contains file handle
+	bcs closeInputFile		@ the string is now stored at start_state, r0 now contains the bytes stored
+	; ldr r0,=start_state 	; r0 contains the start_state's address
+	; swi SWI_DpStr					; display start_state's value on stdout
+	; mov r0,#1
+	; mov r1,
+	; swi SWI_PrChr
 
-readIntFromFile:
-	ldr r0,=InFileHandle
-	ldr r0,[r0]
-	swi SWI_RdInt
-	bcs closeInputFile
-	ldr r1,=start_state
-	str r0,[r1]
+; readIntFromFile:
+; 	ldr r0,=InFileHandle
+; 	ldr r0,[r0]
+; 	swi SWI_RdInt
+; 	bcs closeInputFile
+; 	ldr r1,=start_state
+; 	str r0,[r1]
 
 closeInputFile:
 	ldr r0,=InFileHandle
@@ -59,63 +57,88 @@ openOutputFile:
 	ldr r1,=OutFileHandle
 	str r0,[r1]
 
-; printToFile:
-; 	ldr r1,=start_state	;
-; 	mov r2,#1
-; 	swi SWI_PrStr ; print string to the file
-; 	bcs closeOutputFile
+@ function to convert from hexadecimal input to integer
+mov r5,#0	; bit number, goes from 0 to 3 (16 bit binary number so 4 bits in hexa)
+mov r6,#0	; final result will be stored in r6
+mov r7,#1	; to be multipied with hexa value to convert to power of 16
+mov r9,#0 ; temp1
+convertHexaToInteger:
+	mov r8,#1 ; temp2
+	ldrb r1,[r3]	; read one byte from address at r3 to r1
+	add r3,r3,#1 	; increment the address at r3
+	; swi SWI_PrInt ; print string to the file
+	; @ print \n
+	; ldr r1,=end_of_line
+	; swi SWI_PrStr
+	@ r1 contains the ascii value, convert it to 0-15
+	cmp r1, #97
+	bge alphabet
+	number:
+	@ if a number, subtract 48 from the ascii value in r1
+	sub r1,r1,#48
+	b next
+	alphabet:
+	@ if an alphabet A-F , subtract 87 from the ascii value in r1
+	sub r1,r1,#87
+	next:
+		mul r8,r1,r7 ; multiply with appropriate power of 16
+		ORR r7,r9,r7,LSL #4  ; left shift by 4 to get next power of 16
+		add r6,r6,r8 ; final integer value
+		add r5,r5,#1
+		cmp r5,#4	; need to take 4 characters (16 bit hexadecimal number)
+		bge printIntToFile
+		b convertHexaToInteger
 
-; printIntToFile:
-; 	ldr r1,=start_state ;
-; 	ldr r1,[r1]
-; 	swi SWI_PrInt
-; 	@ print \n
-; 	ldr r1,=end_of_line
-; 	swi SWI_PrStr
-
-ldr r1,=start_state ;
-ldr r1,[r1]
-
-mov r6,r1			; r6 now contains the value of start_state, remains unchanged
-mov r5,#0			; r5 contains the current period value
-mov r3,r6			; r3 is used to calculate bit value, initialization
-mov r4,r6 		; r4 is used to generate next value of lfsr
-mov r7,#0
-lfsr:
-	EOR r3,r3,r4,LSR #2
-	EOR r3,r3,r4,LSR #3
-	EOR r3,r3,r4,LSR #5
-	@ now r3 contains the value of lfsr ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)
-	AND r3,r3,#1 ; now r3 contains the value of bit as in c program
-	ORR r4,r7,r4,LSR #1 ; r4 contains lfsr >> 1
-	ORR r4,r4,r3,LSL #15; r4 contains r4 | (bit << 15)
-	@ now r4 contains the next pseudo random no
-	mov r3,r4			; r3 is used to calculate bit value
-	add r5,r5,#1 ; increment the period
-	cmp r5,#5	; compare period with 5
-	bgt NotPrintLfsr ; if less or equal, need to print the lfsr value
-	printLFSR:
-		@ print lfsr =
-		ldr r1,=lfsr_str
-		swi SWI_PrStr
-		@ print the value of lfsr
-		mov r1, r4
-		swi SWI_PrInt
-		@ print \n
-		ldr r1,=end_of_line
-		swi SWI_PrStr
-
-	NotPrintLfsr:
-	cmp r4,r6 ; compare with the start_state
-	bne lfsr ; if not equal continue in the loop
-
-printPostTermination:
-	@ print lfsr =
-	ldr r1,=lfsr_end
-	swi SWI_PrStr
-	@ print the value of lfsr
-	mov r1, r4
+printIntToFile:
+	mov r1,r6
 	swi SWI_PrInt
+	@ print \n
+	ldr r1,=end_of_line
+	swi SWI_PrStr
+
+; ldr r1,=start_state ;
+; ldr r1,[r1]
+;
+; mov r6,r1			; r6 now contains the value of start_state, remains unchanged
+; mov r5,#0			; r5 contains the current period value
+; mov r3,r6			; r3 is used to calculate bit value, initialization
+; mov r4,r6 		; r4 is used to generate next value of lfsr
+; mov r7,#0
+; lfsr:
+; 	EOR r3,r3,r4,LSR #2
+; 	EOR r3,r3,r4,LSR #3
+; 	EOR r3,r3,r4,LSR #5
+; 	@ now r3 contains the value of lfsr ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)
+; 	AND r3,r3,#1 ; now r3 contains the value of bit as in c program
+; 	ORR r4,r7,r4,LSR #1 ; r4 contains lfsr >> 1
+; 	ORR r4,r4,r3,LSL #15; r4 contains r4 | (bit << 15)
+; 	@ now r4 contains the next pseudo random no
+; 	mov r3,r4			; r3 is used to calculate bit value
+; 	add r5,r5,#1 ; increment the period
+; 	cmp r5,#5	; compare period with 5
+; 	bgt NotPrintLfsr ; if less or equal, need to print the lfsr value
+; 	printLFSR:
+; 		@ print lfsr =
+; 		ldr r1,=lfsr_str
+; 		swi SWI_PrStr
+; 		@ print the value of lfsr
+; 		mov r1, r4
+; 		swi SWI_PrInt
+; 		@ print \n
+; 		ldr r1,=end_of_line
+; 		swi SWI_PrStr
+;
+; 	NotPrintLfsr:
+; 	cmp r4,r6 ; compare with the start_state
+; 	bne lfsr ; if not equal continue in the loop
+;
+; printPostTermination:
+; 	@ print lfsr =
+; 	ldr r1,=lfsr_end
+; 	swi SWI_PrStr
+; 	@ print the value of lfsr
+; 	mov r1, r4
+; 	swi SWI_PrInt
 
 closeOutputFile:
 	ldr r0,=OutFileHandle
