@@ -73,6 +73,9 @@ openOutputFile:
 ; 	ldr r1,=end_of_line
 ; 	swi SWI_PrStr
 
+ldr r1,=start_state ;
+ldr r1,[r1]
+
 mov r6,r1			; r6 now contains the value of start_state, remains unchanged
 mov r5,#0			; r5 contains the current period value
 mov r3,r6			; r3 is used to calculate bit value, initialization
