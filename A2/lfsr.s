@@ -181,23 +181,47 @@ lfsr:
 		@ print lfsr =
 		ldr r1,=lfsr_str
 		swi SWI_PrStr
+		@ convert the value of lfsr to hexa
+		; mov r1,#0 ; this will contain the result
+		ldr r1,=result
+		mov r9,r4 ; used to get 4 bits
+		; we will right shift r9 by 4 and then use it to mask with 15 to get 4 bits
+		mov r8,#0 ; loop counter
+		convertIntegerToHexa:
+			AND r2,r9,#15 ; r2 = r4 & r9
+			cmp r2,#10
+			blt number1
+			alphabet1:
+				@if alphabet, add 87 to it
+				add r2,r2,#87
+				b proceed
+			number1:
+				@ if number add 48 to it
+				add r2,r2,#48
+			proceed:
+			@ need to store this in 1 byte at 'result'
+			strb r2,[r1],#1 ; post-indexed storing in memory
+			MOV r9,r9,LSR #4 ; right shift
+			add r8,r8,#1 ; increment the loop counter
+			cmp r8, #4
+			blt convertIntegerToHexa
 		@ print the value of lfsr
-		mov r1, r4
-		swi SWI_PrInt
+		ldr r1,=result ; result address in memory stores the hexa form
+		swi SWI_PrStr
 		@ print \n
 		ldr r1,=end_of_line
 		swi SWI_PrStr
-	NotPrintLfsr:
-	cmp r4,r6 ; compare with the start_state
-	bne getCounts ; if not equal continue in the loop
+		NotPrintLfsr:
+		cmp r4,r6 ; compare with the start_state
+		bne getCounts ; if not equal continue in the loop
 
 printPostTermination:
 	@ print lfsr =
 	ldr r1,=lfsr_end
 	swi SWI_PrStr
 	@ print the value of lfsr
-	mov r1, r4
-	swi SWI_PrInt
+	ldr r1,=start_state ; from verification, it comes out to be the same
+	swi SWI_PrStr
 
 closeOutputFile:
 	ldr r0,=OutFileHandle
@@ -231,6 +255,7 @@ WriteError:
 
 .data	/* data used by the program including read only variables/constants */
 start_state:	.skip 5	@5 bytes allocated since input would be atmost 4 char long
+result:	.skip 5
 InFileName: .asciz "in.txt"	@used to initialize string
 InFileHandle: .word 0	@used to initialize integer variables
 OutFileName: .asciz "out.txt"
