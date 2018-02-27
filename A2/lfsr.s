@@ -88,48 +88,6 @@ convertHexaToInteger:
 		cmp r5,#4	; need to take 4 characters (16 bit hexadecimal number)
 		bge lfsr_optimal
 		b convertHexaToInteger
-
-; printIntToFile:
-; 	mov r1,r6
-; 	swi SWI_PrInt
-; 	@ print \n
-; 	ldr r1,=end_of_line
-; 	swi SWI_PrStr
-
-; lfsr_begin:
-; ; r6 now contains the value of start_state, remains unchanged
-; mov r5,#0			; r5 contains the current period value
-; mov r3,r6			; r3 is used to calculate bit value, initialization
-; mov r4,r6 		; r4 is used to generate next value of lfsr
-; mov r7,#0
-; lfsr:
-; 	EOR r3,r3,r4,LSR #2
-; 	EOR r3,r3,r4,LSR #3
-; 	EOR r3,r3,r4,LSR #5
-; 	@ now r3 contains the value of lfsr ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)
-; 	AND r3,r3,#1 ; now r3 contains the value of bit as in c program
-; 	ORR r4,r7,r4,LSR #1 ; r4 contains lfsr >> 1
-; 	ORR r4,r4,r3,LSL #15; r4 contains r4 | (bit << 15)
-; 	@ now r4 contains the next pseudo random no
-; 	mov r3,r4			; r3 is used to calculate bit value
-; 	add r5,r5,#1 ; increment the period
-; 	cmp r5,#5	; compare period with 5
-; 	bgt NotPrintLfsr ; if less or equal, need to print the lfsr value
-; 	printLFSR:
-; 		@ print lfsr =
-; 		ldr r1,=lfsr_str
-; 		swi SWI_PrStr
-; 		@ print the value of lfsr
-; 		mov r1, r4
-; 		swi SWI_PrInt
-; 		@ print \n
-; 		ldr r1,=end_of_line
-; 		swi SWI_PrStr
-;
-; 	NotPrintLfsr:
-; 	cmp r4,r6 ; compare with the start_state
-; 	bne lfsr ; if not equal continue in the loop
-
 ; r2,r7,r8,r9 are unused
 lfsr_optimal:
 ; r6 now contains the value of start_state, remains unchanged
@@ -137,15 +95,6 @@ mov r5,#0			; r5 contains the current period value
 mov r3,r6			; r3 is used to calculate bit value, initialization
 mov r4,r6 		; r4 is used to generate next value of lfsr
 mov r7,#0
-; getCounts:
-; 	AND r2,r3,r1 ; r2=r3&1, get bit 0 similarly, r2=r3&4 =>get bit 2
-; 	cmp r2,#0
-; 	bne incCt1
-; 	b proceed
-; 	incCt1:
-; 	ADD r8,r8,#1
-; 	proceed:
-; 	mov r1,r1,LSL #2
 getCounts:
 	mov r1,#1 ; mask
 	mov r8,#0 ; to store count of 1
@@ -184,6 +133,7 @@ lfsr:
 		@ convert the value of lfsr to hexa
 		; mov r1,#0 ; this will contain the result
 		ldr r1,=result
+		add r1,r1,#3 ; since we will store the result from the last byte
 		mov r9,r4 ; used to get 4 bits
 		; we will right shift r9 by 4 and then use it to mask with 15 to get 4 bits
 		mov r8,#0 ; loop counter
@@ -200,7 +150,7 @@ lfsr:
 				add r2,r2,#48
 			proceed:
 			@ need to store this in 1 byte at 'result'
-			strb r2,[r1],#1 ; post-indexed storing in memory
+			strb r2,[r1],#-1 ; post-indexed storing in memory
 			MOV r9,r9,LSR #4 ; right shift
 			add r8,r8,#1 ; increment the loop counter
 			cmp r8, #4
