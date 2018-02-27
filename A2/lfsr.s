@@ -62,6 +62,7 @@ mov r5,#0	; bit number, goes from 0 to 3 (16 bit binary number so 4 bits in hexa
 mov r6,#0	; final result will be stored in r6
 mov r7,#1	; to be multipied with hexa value to convert to power of 16
 mov r9,#0 ; temp, for doing left shift using ORR
+ORR r7,r9,r7,LSL #12; store 2^12 in r7, i.e. 16^4
 convertHexaToInteger:
 	ldrb r1,[r3]	; read one byte from address at r3 to r1
 	add r3,r3,#1 	; increment the address at r3
@@ -81,11 +82,11 @@ convertHexaToInteger:
 	sub r1,r1,#87
 	next:
 		mul r8,r1,r7 ; multiply with appropriate power of 16
-		ORR r7,r9,r7,LSL #4  ; left shift by 4 to get next power of 16
+		ORR r7,r9,r7,LSR #4  ; right shift by 4 to get previous power of 16
 		add r6,r6,r8 ; final integer value
 		add r5,r5,#1
 		cmp r5,#4	; need to take 4 characters (16 bit hexadecimal number)
-		bge lfsr_begin
+		bge lfsr_optimal
 		b convertHexaToInteger
 
 ; printIntToFile:
@@ -95,22 +96,84 @@ convertHexaToInteger:
 ; 	ldr r1,=end_of_line
 ; 	swi SWI_PrStr
 
-lfsr_begin:
+; lfsr_begin:
+; ; r6 now contains the value of start_state, remains unchanged
+; mov r5,#0			; r5 contains the current period value
+; mov r3,r6			; r3 is used to calculate bit value, initialization
+; mov r4,r6 		; r4 is used to generate next value of lfsr
+; mov r7,#0
+; lfsr:
+; 	EOR r3,r3,r4,LSR #2
+; 	EOR r3,r3,r4,LSR #3
+; 	EOR r3,r3,r4,LSR #5
+; 	@ now r3 contains the value of lfsr ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)
+; 	AND r3,r3,#1 ; now r3 contains the value of bit as in c program
+; 	ORR r4,r7,r4,LSR #1 ; r4 contains lfsr >> 1
+; 	ORR r4,r4,r3,LSL #15; r4 contains r4 | (bit << 15)
+; 	@ now r4 contains the next pseudo random no
+; 	mov r3,r4			; r3 is used to calculate bit value
+; 	add r5,r5,#1 ; increment the period
+; 	cmp r5,#5	; compare period with 5
+; 	bgt NotPrintLfsr ; if less or equal, need to print the lfsr value
+; 	printLFSR:
+; 		@ print lfsr =
+; 		ldr r1,=lfsr_str
+; 		swi SWI_PrStr
+; 		@ print the value of lfsr
+; 		mov r1, r4
+; 		swi SWI_PrInt
+; 		@ print \n
+; 		ldr r1,=end_of_line
+; 		swi SWI_PrStr
+;
+; 	NotPrintLfsr:
+; 	cmp r4,r6 ; compare with the start_state
+; 	bne lfsr ; if not equal continue in the loop
+
+; r2,r7,r8,r9 are unused
+lfsr_optimal:
 ; r6 now contains the value of start_state, remains unchanged
 mov r5,#0			; r5 contains the current period value
 mov r3,r6			; r3 is used to calculate bit value, initialization
 mov r4,r6 		; r4 is used to generate next value of lfsr
 mov r7,#0
+; getCounts:
+; 	AND r2,r3,r1 ; r2=r3&1, get bit 0 similarly, r2=r3&4 =>get bit 2
+; 	cmp r2,#0
+; 	bne incCt1
+; 	b proceed
+; 	incCt1:
+; 	ADD r8,r8,#1
+; 	proceed:
+; 	mov r1,r1,LSL #2
+getCounts:
+	mov r1,#1 ; mask
+	mov r8,#0 ; to store count of 1
+	AND r2,r3,r1 ; r2 = r3 & 1 , get bit 0
+	cmp r2,#0
+	ADDNE r8,r8,#1 ; if r3 not equal to 1 then add 1 to r8
+	mov r1,r1,LSL #2 ; r1 = 2^2 = 4
+	AND r2,r3,r1 ; r2 = r3 & 2^2 , get bit 2
+	cmp r2,#0
+	ADDNE r8,r8,#1
+	mov r1,r1,LSL #1 ; r1 = 2^3 = 8
+	AND r2,r3,r1 ; r2 = r3 & 2^3 , get bit 2
+	cmp r2,#0
+	ADDNE r8,r8,#1
+	mov r1,r1,LSL #2 ; r1 = 2^5 = 32
+	AND r2,r3,r1 ; r2 = r3 & 2^5 , get bit 2
+	cmp r2,#0
+	ADDNE r8,r8,#1
 lfsr:
-	EOR r3,r3,r4,LSR #2
-	EOR r3,r3,r4,LSR #3
-	EOR r3,r3,r4,LSR #5
-	@ now r3 contains the value of lfsr ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)
-	AND r3,r3,#1 ; now r3 contains the value of bit as in c program
 	ORR r4,r7,r4,LSR #1 ; r4 contains lfsr >> 1
+	; get the correct value of bit in r3
+	AND r8,r8,#1 ; r8 = r8 & 1, get last bit, check whether odd or even
+	mov r3,#0 ; if even, i.e. r8 contains 0
+	cmp r8,#0
+	MOVNE r3,#1 ; if odd, i.e. r8 contains 1
 	ORR r4,r4,r3,LSL #15; r4 contains r4 | (bit << 15)
 	@ now r4 contains the next pseudo random no
-	mov r3,r4			; r3 is used to calculate bit value
+	mov r3,r4
 	add r5,r5,#1 ; increment the period
 	cmp r5,#5	; compare period with 5
 	bgt NotPrintLfsr ; if less or equal, need to print the lfsr value
@@ -124,10 +187,9 @@ lfsr:
 		@ print \n
 		ldr r1,=end_of_line
 		swi SWI_PrStr
-
 	NotPrintLfsr:
 	cmp r4,r6 ; compare with the start_state
-	bne lfsr ; if not equal continue in the loop
+	bne getCounts ; if not equal continue in the loop
 
 printPostTermination:
 	@ print lfsr =
@@ -178,5 +240,5 @@ OutFileErrorMsg: .asciz "Unable to open output file\n"
 ReadErrorMsg: .asciz "Unable to read from the input file\n"
 WriteErrorMsg: .asciz "Unable to write to the output file\n"
 end_of_line: .asciz "\n"
-lfsr_str: .asciz "lsfr="
+lfsr_str: .asciz "lfsr="
 lfsr_end: .asciz "Post termination lfsr="
