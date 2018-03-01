@@ -1,2 +1,5 @@
 ADD    r2   ,    r1, #4
 SUB r1, r2, r3
+sub r5,r7,#32
+add r5,r7,r2
+add r5,r7,r11

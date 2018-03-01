@@ -2,10 +2,11 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
-int registers[16]; // for storing the registers
+int r[16]; // for storing the registers
 int memory[100]; // for memory, assumed to be 100 words (100 * 32 bit)
 int startAddress = 1000 ; // start address of the memory
 
@@ -79,6 +80,47 @@ int getOperand2(int &j, string s, bool &imm){
     }
     return res;
 }
+
+// function to perform add instruction
+void add(int rd, int rn, int operand2, bool i){ 
+    if(i == true){
+        r[rd] = r[rn] + operand2;
+    }
+    else{
+        r[rd] = r[rn] + r[operand2];
+    }
+}
+// function to perform sub instruction
+void sub(int rd, int rn, int operand2, bool i){ 
+    if(i == true){
+        r[rd] = r[rn] - operand2;
+    }
+    else{
+        r[rd] = r[rn] - r[operand2];
+    }
+}
+// function to perform mul instruction
+void mul(int rd, int rn, int operand2){ 
+    r[rd] = r[rn] * r[operand2];
+}
+// function to perform mov instruction
+void mov(int rd, int operand2, bool i){
+    if(i == true){
+        r[rd] = operand2;
+    }
+    else{
+        r[rd] = r[operand2];
+    }
+}
+// function to perform ldr instruction  ( in progress )
+void ldr(int rd, int operand2){ 
+    r[rd] = memory[operand2];
+}
+// function to perform str instruction ( in progress )
+void str(int rd, int operand2){ 
+    memory[operand2] = r[rd];
+}
+
 int main(){
 
     vector <string> instructions; // instructions array
@@ -100,7 +142,7 @@ int main(){
         instructions.push_back(inst);
     }
 
-    int num_inst = instructions.size() - 1; // no of instructions, last instruction is null (new line)
+    int num_inst = instructions.size(); // no of instructions
     fout << "Number of instructions: " << num_inst << "\n";
     for(int i = 0; i < num_inst; i++){
         // cout << instructions[i] << "\n";
@@ -117,29 +159,53 @@ int main(){
         rd = getRegisterValue(j, instructions[i]);
         if(rd == -1){
             // error handling
-            cout << "Error in rd\n";
+            fout << "Error in rd\n";
             break;
         }
         // get rn
         rn = getRegisterValue(j, instructions[i]);
         if(rn == -1){
             // error handling
-            cout << "Error in rn\n";
+            fout << "Error in rn\n";
             break;
         }
         // get operand2
         operand2 = getOperand2(j, instructions[i], imm);
         if(operand2 == -1){
             // error handling
-            cout << "Error in operand2\n";
+            fout << "Error in operand2\n";
             break;
         }
         if(imm){
-            fout << op << " " << rd << " " << rn << " #" << operand2 << "\n";
+            fout << op << " " << rd << " " << rn << " #" << operand2 << " => ";
         }
         else{
-            fout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+            fout << op << " " << rd << " " << rn << " " << operand2 << " => ";
         }
+        transform(op.begin(), op.end(), op.begin(), ::tolower); //convert op to lower case
+        if(op == "add"){
+            add(rd, rn, operand2, imm); //call to add function
+        }
+        else if(op == "sub"){
+            sub(rd, rn, operand2, imm); //call to sub function
+        }
+        else if(op == "mul"){
+            mul(rd, rn, operand2); //call to mul function
+        }
+        else if(op == "mov"){
+            mov(rd, operand2, imm); //call to mov function
+        }
+        else if(op == "ldr"){
+            ldr(rd, operand2);
+        }
+        else if(op == "str"){
+            str(rd, operand2);
+        }
+        // display the contents of the register file 
+        for(int j = 0; j < 10; j++){
+            fout << "|r" << j << "=" << r[j] ;
+        }
+        fout << "|\n";
         op.clear(); // clear the string op
         imm = false; // set immediate operand to be false
     }
