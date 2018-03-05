@@ -11,9 +11,10 @@ private:
 	int C; // carry Flag
 public:
 	ARM(){
-		for(int i = 0 ; i < 16 ; i ++){
+		for(int i = 0 ; i < 15 ; i ++){
 			r[i] = 0;
 		}
+		r[15] = 1000; // instruction addr starts with 1000	
 		for(int i = 0 ; i < 100 ; i ++){
 			memory[i] = 0;
 		}
@@ -55,6 +56,12 @@ public:
 	void ldr(int rd, int operand2){
 		r[rd] = memory[operand2];
 	}
+
+	// function to perform ldr offset instruction  ( in progress )
+	void ldr1(int rd, int rn, int offset){
+		r[rd] = memory[rn]+offset;
+	}
+
 	// function to perform str instruction ( in progress )
 	void str(int rd, int operand2){
 		memory[operand2] = r[rd];
@@ -141,6 +148,11 @@ public:
 		}
 	}
 
+	// function to perform offset
+	void offset(int r1, int offset){
+		r[r1]=r[r1]+offset;
+	}
+
 	// executing the instructions 
 	void execute(instructions i){
 		// get the instruction parameters 
@@ -163,10 +175,45 @@ public:
 			mov(rd, operand2, imm); //call to mov function
 		}
 		else if(op == "ldr"){
-			ldr(rd, operand2);
+			ldr(rd, rn);
+		}
+		else if(op == "ldr1"){
+			ldr1(rd, rn, operand2);
+		}
+		else if(op == "ldr2"){
+			offset(rn, operand2);
+			ldr(rd, rn);
+		}
+		else if(op == "ldr3"){
+			ldr(rd, rn);
+			offset(rn, operand2);
 		}
 		else if(op == "str"){
 			str(rd, operand2);
+		}
+		else if(op == "b"){
+			b(operand2);
+		}
+		else if(op == "bl"){
+			bl(operand2);
+		}
+		else if(op == "bge"){
+			bge(operand2);
+		}
+		else if(op == "bne"){
+			bne(operand2);
+		}
+		else if(op == "beq"){
+			beq(operand2);
+		}
+		else if(op == "blt"){
+			blt(operand2);
+		}
+		else if(op == "cmp"){
+			cmp(rn, operand2);
+		}
+		else if(op == "cmn"){
+			cmn(rn, operand2);
 		}
 	}
 
@@ -181,15 +228,24 @@ public:
 	void run(vector <instructions> inst_vec){
 		int pointer=0;
 		while(pointer != inst_vec.size()){
-			r[15] = 1000 + pointer * 4;
+			int old, newPC;
+			old = r[15];
+			newPC = r[15];
 			execute(inst_vec[pointer]);   // execute the ith instruction
+			if(r[15] != old){
+				newPC = r[15]; // if PC has changed then store new value and 
+				r[15] = old; // old value back to PC for display
+			}
 			display(); // display the contents of register
-			if(r[15] != 1000 + pointer * 4){
+			
+			r[15] = newPC;
+			if(r[15] != old){
 				// check whether pc is changed after the execution of instruction
 				pointer = (r[15] - 1000)/4; // update the pointer 
 			}
 			else{
 				pointer ++; // if pointer = pc then increment pointer 
+				r[15] += 4; // update PC
 			}
 			// if(Debug == 1){
 			// 	char c;

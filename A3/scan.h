@@ -199,7 +199,7 @@ int scanLabels(){
         		}
                 Label temp;
                 temp.label_name = lab;
-                temp.addr = i - labels.size(); // this will be the actual instruction index(0-based) the label points to
+                temp.addr = (i - labels.size())*4 + 1000; // this will be the actual instruction index(0-based) the label points to
         		labels.push_back(temp); // add the label to the vector labels
         		lab.clear(); // clear the string lab
         		continue ; // parse the next instruction
@@ -295,6 +295,9 @@ int scanMain(){
 			int label_addr = checkValidLabel(label_name);
 			if(label_addr != -1){
 				operand2 = label_addr;
+                inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // push to the instructions class vector
+                label_name.clear(); // clear the label name for further use 
+                op.clear(); // clear the string op for next inst
 				continue; // move to next instruction 
 			}
 			else{
@@ -303,7 +306,6 @@ int scanMain(){
 				cout << "Instruction " << i+1 << ": No such label exists in the file.\n";
 				return -1;
 			}
-			label_name.clear(); // clear the label name for further use 
 		}
         // get rd
         rd = getRegisterValue(j, str_inst[i]);
