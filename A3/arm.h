@@ -6,9 +6,9 @@ private:
 	int r[16]; // for storing the registers
 	int memory[100]; // for memory, assumed to be 100 words (100 * 32 bit)
 	int startAddress; // start address of the memory
-	int N; //Negative Flag
-	int Z; //zero Flag
-	int C; //Carry Flag
+	int N; // negative Flag
+	int Z; // zero Flag
+	int C; // carry Flag
 public:
 	ARM(){
 		for(int i = 0 ; i < 16 ; i ++){
@@ -18,9 +18,7 @@ public:
 			memory[i] = 0;
 		}
 		startAddress = 1000;
-		N=0;
-		Z=0;
-		C=0;
+		N = 0; Z = 0; C = 0;
 	}
 	// function to perform add instruction
 	void add(int rd, int rn, int operand2, bool i){
@@ -70,12 +68,12 @@ public:
 	// function to perform cmp instruction
 	void cmp(int r1, int r2){
 		if((r[r1] > 0 && r[r2] > 0)||(r[r1] < 0 && r[r2] < 0)){
-			if(r[r1]-r[r2]<0){
-				N=1;
+			if(r[r1] - r[r2]<0){
+				N = 1;
 			}
 			else if(r[r1] - r[r2] == 0){
-				Z=1;
-				C=1;
+				Z = 1;
+				C = 1;
 			}
 		}
 		else cmn(r1, r2);
@@ -88,18 +86,18 @@ public:
 		}
 		else if(r[r1] > 0 && r[r2] < 0){
 			if(r[r1] + r[r2] < 0){
-				N=1;
+				N = 1;
 			}
 			else if(r[r1] + r[r2] == 0){
-				Z=1;
+				Z = 1;
 			}
 		}
 		else{
 			if(r[r1] + r[r2] > 0){
-				N=1;
+				N = 1;
 			}
 			else if(r[r1] + r[r2] == 0){
-				Z=1;
+				Z = 1;
 			}        
 		}
 	}
@@ -107,13 +105,13 @@ public:
 	// function to perform bge instruction
 	void bge(int label){
 		if(N == 0 && Z == 0){
-			r[15]=label;
+			r[15] = label;
 		}
 	}
 
 	// function to perform b instruction
 	void b(int label){
-		r[15]=label;
+		r[15] = label;
 	}
 
 	// function to perform beq instruction
@@ -125,7 +123,7 @@ public:
 
 	// function to perform bl instruction
 	void bl(int label){
-		r[14] = r[15] + 4;		//pointing LR to net instruction of pc
+		r[14] = r[15] + 4;	// pointing LR to net instruction of pc
 		r[15] = label;		// updating pc to label
 	}
 
@@ -136,7 +134,7 @@ public:
 		}
 	}
 
-	// function to perform blt instruction
+	// function to perform bne instruction
 	void bne(int label){
 		if(Z != 1){
 			r[15] = label;
@@ -182,16 +180,21 @@ public:
 
 	void run(vector <instructions> inst_vec){
 		int pointer=0;
-		while(pointer !=inst_vec.size()){
+		while(pointer != inst_vec.size()){
 			r[15] = 1000 + pointer * 4;
 			execute(inst_vec[pointer]);   // execute the ith instruction
 			display(); // display the contents of register
-			pointer=(r[15] - 1000) / 4;
-			pointer++;
-			if(Debug == 1){
-				char c;
-				scanf("%c",&c);
+			if(r[15] != 1000 + pointer * 4){
+				// check whether pc is changed after the execution of instruction
+				pointer = (r[15] - 1000)/4; // update the pointer 
 			}
+			else{
+				pointer ++; // if pointer = pc then increment pointer 
+			}
+			// if(Debug == 1){
+			// 	char c;
+			// 	scanf("%c",&c);
+			// }
 		}
 	}
 };

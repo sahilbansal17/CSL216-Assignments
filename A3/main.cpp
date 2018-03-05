@@ -7,7 +7,7 @@
 #include "arm.h" // contain all the code to execute all the arm related instructions 
 using namespace std;
 
-ARM a;
+ARM myArm;
 /* 
 defined in scan.h :
     class instructions; 
@@ -31,7 +31,7 @@ int main(){
         cout << "\nTerminating...";
     }
     else{
-        a.run(inst_vec);
+        myArm.run(inst_vec);
     } 
 
     // fout.close(); // to close the output file

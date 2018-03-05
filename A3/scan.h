@@ -1,4 +1,5 @@
 // This file contains all code relevant to parsing of the instructions and also the class named instructions.
+// #include <stack> // used for assigning labels in one pass of the instructions 
 using namespace std;
 
 class instructions{
@@ -7,7 +8,7 @@ private:
 	string op; // operation name
 	int rd, rn, operand2; // the main 3 operands for any kind of instrution
 	bool imm; // whether immediate operand or not
-    int label;
+   	// operand2 will only act as label for branch instructions, label address (int) will be passed in it
 public:
 	instructions(){
 		; // default constructor
@@ -35,9 +36,6 @@ public:
 	bool getImm(){
 		return imm;
 	}
-    int getLabel(){
-		return label;
-	}
 	// setter functions
 	void setOp(string s){
 		op = s;
@@ -50,9 +48,6 @@ public:
 	}
 	void setOp2(int r){
 		operand2 = r;
-	}
-    void setLabel(int r){
-		label = r;
 	}
 };
 
@@ -156,21 +151,83 @@ int checkValidOp(string op){
 int checkValidLabel(string label){
 	for(int i = 0 ; i < labels.size() ; i++){
 		if(label == labels[i].label_name){
-			return labels[i].addr;
+			return labels[i].addr; // if it exists then return its address
 		}
 	}
 	return -1;
 }
 
+
+// stack <int> unassignedLabels;
+
+vector <string> str_inst; // vector of instructions string type
+
+int scanLabels(){
+
+    string lab; // for the label name
+
+    int tot_lines = str_inst.size(); // total lines of instructions/data/labels to parse
+	for(int i = 0; i < tot_lines; i++){
+       
+        int j = 0, len_inst = str_inst[i].length();
+
+        // get the label/operation name
+        while(j < len_inst && str_inst[i][j] != ' ' && str_inst[i][j] != ':'){
+            lab += str_inst[i][j];
+            j ++;
+        }
+        // lab[j] = '\0'; // terminate the string lab
+        transform(lab.begin(), lab.end(), lab.begin(), ::tolower); //convert lab to lower case
+        // check whether lab is a valid operation name
+        int check = checkValidOp(lab);
+
+        if(check == 0){
+        	// check whether it can be a label
+        	// 1. ignore Spaces
+        	ignoreSpaces(j, str_inst[i]);
+        	// 2. check for ':', i.e. a colon
+        	if(str_inst[i][j++] != ':'){
+        		cout << "Instruction " << i+1 << ": Neither a valid operation nor a valid label.\n";
+        		return -1;
+        	}
+        	else{
+        		ignoreSpaces(j, str_inst[i]);
+        		// should be nothing after the colon and whitespaces
+        		if(j == len_inst - 1 || str_inst[i][j]){
+        			cout << "Instruction " << i+1 <<": Not a valid label (label cannot be followed by any instruction).\n";
+        			return -1;
+        		}
+                Label temp;
+                temp.label_name = lab;
+                temp.addr = i - labels.size(); // this will be the actual instruction index(0-based) the label points to
+        		labels.push_back(temp); // add the label to the vector labels
+        		lab.clear(); // clear the string lab
+        		continue ; // parse the next instruction
+        	}
+        }
+		else{
+			lab.clear(); // clear the string lab
+			continue;
+        }
+        
+    }
+    int num_labels = labels.size(); // no of labels
+    cout << "Number of labels: " << num_labels << "\n";
+
+    return 1;
+
+}
+
+
 // the main scanning function
 int scanMain(){
-	
-	vector <string> str_inst; // vector of instructions string type
+
     string inst; // current instruction
     string op; // for the operation name
     int rd, rn, operand2; // for add, sub
     bool imm; // 1 if immediate operand else 0
     // int rm; // for mul
+	string label_name ;
 
 	ifstream fin; // to read input from the file
     fin.open("in.txt"); // specify the input file
@@ -181,6 +238,11 @@ int scanMain(){
         str_inst.push_back(inst);
     }
     fin.close(); // to close the input file
+
+    int status_labels = scanLabels(); // returns the status whether labels are properly defined 
+    if(status_labels == -1){
+    	return -1; // return, no more need to scan the instructions 
+    }
 
     int tot_lines = str_inst.size(); // total lines of instructions/data/labels to parse
 	for(int i = 0; i < tot_lines; i++){
@@ -193,7 +255,7 @@ int scanMain(){
             op += str_inst[i][j];
             j ++;
         }
-        op[j] = '\n'; // terminate the string op
+        // op[j] = '\0'; // terminate the string op
         transform(op.begin(), op.end(), op.begin(), ::tolower); //convert op to lower case
         // check whether op is a valid operation name
         int check = checkValidOp(op);
@@ -214,14 +276,35 @@ int scanMain(){
         			cout << "Instruction " << i+1 <<": Not a valid label (label cannot be followed by any instruction).\n";
         			return -1;
         		}
-                Label temp;
-                temp.label_name=op;
-                temp.addr=inst_vec.size();
-        		labels.push_back(temp); // add the label to the vector labels
+           		// its a valid label, so must already be in the labels vector 
         		op.clear(); // clear the string op
         		continue ; // parse the next instruction
         	}
         }
+		else if(op[0] == 'b'){
+			// if it is a branch instruction
+			// 1. ignore spaces
+			ignoreSpaces(j, str_inst[i]);
+			// 2. get the label name
+			while(j < len_inst && str_inst[i][j] != ' '){
+				label_name += str_inst[i][j];
+				j ++;
+			}
+			// label_name += '\0'; // add null char
+			transform(label_name.begin(), label_name.end(), label_name.begin(), ::tolower); //convert label_name to lower case
+			int label_addr = checkValidLabel(label_name);
+			if(label_addr != -1){
+				operand2 = label_addr;
+				continue; // move to next instruction 
+			}
+			else{
+				// this could have been the case when the label can be defined somewhere below in the program
+				// but since labels are already processed, it must be available 
+				cout << "Instruction " << i+1 << ": No such label exists in the file.\n";
+				return -1;
+			}
+			label_name.clear(); // clear the label name for further use 
+		}
         // get rd
         rd = getRegisterValue(j, str_inst[i]);
         if(rd == -1){
@@ -257,8 +340,8 @@ int scanMain(){
     }
     int num_inst = inst_vec.size(); // no of instructions
     cout << "Number of instructions: " << num_inst << "\n";
-    int num_labels = labels.size(); // no of labels
-    cout << "Number of labels: " << num_labels << "\n";
+    // int num_labels = labels.size(); // no of labels
+    // cout << "Number of labels: " << num_labels << "\n";
 
     return 1;
 }
