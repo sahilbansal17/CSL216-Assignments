@@ -1,7 +1,7 @@
 #include "arm.h"
-#include <iostream>
+#include <stdio.h>
 using namespace std;
- 
+
 ARM myArm ; 
 // executing the instructions 
 void execute(instructions i){
@@ -36,7 +36,7 @@ void execute(instructions i){
 // display the contents of the register file
 void display(){
     for(int j = 0; j < 10; j++){
-        cout << "|r" << j << "=" << myArm.getR_atIndex(j) ;
+        printf("|r%d=%5d",j,myArm.getR_atIndex(j)) ;
     }
     cout << "|\n";
 }
