@@ -4,10 +4,10 @@
 #include <fstream> // used for file handling 
 #include <algorithm> // used for transforming string to lowercase 
 #include "scan.h" // contains all the code to parse the instructions 
-#include "execute.h" // contains all the code to execute the instructions 
-
+#include "arm.h" // contain all the code to execute all the arm related instructions 
 using namespace std;
 
+ARM a;
 /* 
 defined in scan.h :
     class instructions; 
@@ -18,11 +18,6 @@ defined in scan.h :
 
 defined in arm.h :
     class ARM;
-
-defined in execute.h :
-    ARM myArm;
-    void execute(instructions i);
-    void display();
 */
 
 int main(){
@@ -36,11 +31,7 @@ int main(){
         cout << "\nTerminating...";
     }
     else{
-        int no_of_inst = inst_vec.size();
-        for(int i = 0 ; i < no_of_inst ; i++){
-            execute(inst_vec[i]); // execute the ith instruction
-            display(); // display the contents of register 
-        }
+        a.run(inst_vec);
     } 
 
     // fout.close(); // to close the output file
