@@ -24,42 +24,42 @@ public:
 	}
 	// function to perform add instruction
 	void add(int rd, int rn, int operand2, bool i){
-	    if(i == true){
-	        r[rd] = r[rn] + operand2;
-	    }
-	    else{
-	        r[rd] = r[rn] + r[operand2];
-	    }
+		if(i == true){
+			r[rd] = r[rn] + operand2;
+		}
+		else{
+			r[rd] = r[rn] + r[operand2];
+		}
 	}
 	// function to perform sub instruction
 	void sub(int rd, int rn, int operand2, bool i){
-	    if(i == true){
-	        r[rd] = r[rn] - operand2;
-	    }
-	    else{
-	        r[rd] = r[rn] - r[operand2];
-	    }
+		if(i == true){
+			r[rd] = r[rn] - operand2;
+		}
+		else{
+			r[rd] = r[rn] - r[operand2];
+		}
 	}
 	// function to perform mul instruction
 	void mul(int rd, int rn, int operand2){
-	    r[rd] = r[rn] * r[operand2];
+		r[rd] = r[rn] * r[operand2];
 	}
 	// function to perform mov instruction
 	void mov(int rd, int operand2, bool i){
-	    if(i == true){
-	        r[rd] = operand2;
-	    }
-	    else{
-	        r[rd] = r[operand2];
-	    }
+		if(i == true){
+			r[rd] = operand2;
+		}
+		else{
+			r[rd] = r[operand2];
+		}
 	}
 	// function to perform ldr instruction  ( in progress )
 	void ldr(int rd, int operand2){
-	    r[rd] = memory[operand2];
+		r[rd] = memory[operand2];
 	}
 	// function to perform str instruction ( in progress )
 	void str(int rd, int operand2){
-	    memory[operand2] = r[rd];
+		memory[operand2] = r[rd];
 	}
 
 	// function to get register value of a particular reg 
@@ -69,11 +69,11 @@ public:
 
 	// function to perform cmp instruction
 	void cmp(int r1, int r2){
-		if((r[r1]>0 && r[r2]>0)||(r[r1]<0 && r[r2]<0)){
+		if((r[r1] > 0 && r[r2] > 0)||(r[r1] < 0 && r[r2] < 0)){
 			if(r[r1]-r[r2]<0){
 				N=1;
 			}
-			else if(r[r1]-r[r2]==0){
+			else if(r[r1] - r[r2] == 0){
 				Z=1;
 				C=1;
 			}
@@ -83,22 +83,22 @@ public:
 
 	// function to perform cmn instruction
 	void cmn(int r1, int r2){
-		if((r[r1]>0 && r[r2]>0)||(r[r1]<0 && r[r2]<0)){
+		if((r[r1] > 0 && r[r2] > 0)||(r[r1] < 0 && r[r2] < 0)){
 			cmp(r1, r2);
 		}
-		else if(r[r1]>0 && r[r2]<0){
-			if(r[r1]+r[r2]<0){
+		else if(r[r1] > 0 && r[r2] < 0){
+			if(r[r1] + r[r2] < 0){
 				N=1;
 			}
-			else if(r[r1]+r[r2]==0){
+			else if(r[r1] + r[r2] == 0){
 				Z=1;
 			}
 		}
 		else{
-			if(r[r1]+r[r2]>0){
+			if(r[r1] + r[r2] > 0){
 				N=1;
 			}
-			else if(r[r1]+r[r2]==0){
+			else if(r[r1] + r[r2] == 0){
 				Z=1;
 			}        
 		}
@@ -106,7 +106,7 @@ public:
 
 	// function to perform bge instruction
 	void bge(int label){
-		if(N==0 && Z==0){
+		if(N == 0 && Z == 0){
 			r[15]=label;
 		}
 	}
@@ -118,28 +118,28 @@ public:
 
 	// function to perform beq instruction
 	void beq(int label){
-		if(Z==1){
+		if(Z == 1){
 			r[15] = label;
 		}
 	}
 
 	// function to perform bl instruction
 	void bl(int label){
-		r[14]=r[15]+4;		//pointing LR to net instruction of pc
-		r[15]=label;		// updating pc to label
+		r[14] = r[15] + 4;		//pointing LR to net instruction of pc
+		r[15] = label;		// updating pc to label
 	}
 
 	// function to perform blt instruction
 	void blt(int label){
-		if(N==1){
-			r[15]=label;
+		if(N == 1){
+			r[15] = label;
 		}
 	}
 
 	// function to perform blt instruction
 	void bne(int label){
-		if(Z!=1){
-			r[15]=label;
+		if(Z != 1){
+			r[15] = label;
 		}
 	}
 
@@ -182,12 +182,16 @@ public:
 
 	void run(vector <instructions> inst_vec){
 		int pointer=0;
-		while(pointer!=inst_vec.size()){
-			r[15]=1000+pointer*4;
+		while(pointer !=inst_vec.size()){
+			r[15] = 1000 + pointer * 4;
 			execute(inst_vec[pointer]);   // execute the ith instruction
 			display(); // display the contents of register
-			pointer=(r[15]-1000)/4;
+			pointer=(r[15] - 1000) / 4;
 			pointer++;
+			if(Debug == 1){
+				char c;
+				scanf("%c",&c);
+			}
 		}
 	}
 };

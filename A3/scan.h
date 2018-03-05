@@ -7,6 +7,7 @@ private:
 	string op; // operation name
 	int rd, rn, operand2; // the main 3 operands for any kind of instrution
 	bool imm; // whether immediate operand or not
+    int label;
 public:
 	instructions(){
 		; // default constructor
@@ -34,6 +35,9 @@ public:
 	bool getImm(){
 		return imm;
 	}
+    int getLabel(){
+		return label;
+	}
 	// setter functions
 	void setOp(string s){
 		op = s;
@@ -47,6 +51,9 @@ public:
 	void setOp2(int r){
 		operand2 = r;
 	}
+    void setLabel(int r){
+		label = r;
+	}
 };
 
 vector <instructions> inst_vec; // vector of instructions class type object
@@ -55,7 +62,11 @@ vector <instructions> inst_vec; // vector of instructions class type object
 string supportedInst[14]={"add", "sub", "mul", "mov", "ldr", "str", "cmp", "cmn", "bge", "b", "beq", "bne", "bl", "blt"};
 int numSupported = 14;
 
-vector <string> labels; // to store the labels in the instructions
+struct Label{
+    string label_name;
+    int addr;
+};
+vector <Label> labels; // to store the labels in the instructions
 
 // increment the pointer j till point of no space
 void ignoreSpaces(int &j, string s){
@@ -141,6 +152,16 @@ int checkValidOp(string op){
 	return 0;
 }
 
+// checks whether an Label exists or not
+int checkValidLabel(string label){
+	for(int i = 0 ; i < labels.size() ; i++){
+		if(label == labels[i].label_name){
+			return labels[i].addr;
+		}
+	}
+	return -1;
+}
+
 // the main scanning function
 int scanMain(){
 	
@@ -193,7 +214,10 @@ int scanMain(){
         			cout << "Instruction " << i+1 <<": Not a valid label (label cannot be followed by any instruction).\n";
         			return -1;
         		}
-        		labels.push_back(op); // add the label to the vector labels
+                Label temp;
+                temp.label_name=op;
+                temp.addr=inst_vec.size();
+        		labels.push_back(temp); // add the label to the vector labels
         		op.clear(); // clear the string op
         		continue ; // parse the next instruction
         	}
