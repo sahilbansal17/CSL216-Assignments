@@ -307,36 +307,43 @@ int scanMain(){
 				return -1;
 			}
 		}
-        // get rd
-        rd = getRegisterValue(j, str_inst[i]);
-        if(rd == -1){
-            // error handling
-            cout << "Instruction " << i+1 << ": Error in rd\n";
-            return -1;
-        }
-        // get rn
-        rn = getRegisterValue(j, str_inst[i]);
-        if(rn == -1){
-            // error handling
-            cout << "Instruction " << i+1 << ": Error in rn\n";
-            return -1;
-        }
-        // get operand2
-        operand2 = getOperand2(j, str_inst[i], imm);
-        if(operand2 == -1){
-            // error handling
-            cout << "Instruction " << i+1 << ": Error in operand2\n";
-            return -1;
-        }
-        // if(imm){
-        //     cout << op << " " << rd << " " << rn << " #" << operand2 << " => ";
-        // }
-        // else{
-        //     cout << op << " " << rd << " " << rn << " " << operand2 << " => ";
-        // }
-
-        inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // push to the instructions class vector
-
+		else if(op == "add" || op == "sub"){
+	        // get rd
+	        rd = getRegisterValue(j, str_inst[i]);
+	        if(rd == -1){
+	            // error handling
+	            cout << "Instruction " << i+1 << ": Error in rd\n";
+	            return -1;
+	        }
+	        // get rn
+	        rn = getRegisterValue(j, str_inst[i]);
+	        if(rn == -1){
+	            // error handling
+	            cout << "Instruction " << i+1 << ": Error in rn\n";
+	            return -1;
+	        }
+	        // get operand2
+	        operand2 = getOperand2(j, str_inst[i], imm);
+	        if(operand2 == -1){
+	            // error handling
+	            cout << "Instruction " << i+1 << ": Error in operand2\n";
+	            return -1;
+	        }
+	        inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // push to the instructions class vector
+	    }
+    	else if(op == "cmp"){
+			rn = getRegisterValue(j, str_inst[i]);
+			if(rn == -1){
+				cout << "Instruction " << i+1 << ": Error in rn\n";
+				return -1;
+			}
+			operand2 = getOperand2(j, str_inst[i], imm);
+			if(operand2 == -1){
+				cout << "Instruction " << i+1 << ": Error in operand2\n";
+	            return -1;
+			}
+			inst_vec.push_back(instructions(op, 0, rn, operand2, imm)); 
+		}
         op.clear(); // clear the string op
         imm = false; // set immediate operand to be false
     }

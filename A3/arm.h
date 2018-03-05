@@ -72,6 +72,21 @@ public:
 		return r[i];
 	}
 
+	// function to get N flag 
+	int getN(){
+		return N;
+	}
+
+	// function to get Z flag 
+	int getZ(){
+		return Z;
+	}
+
+	// function to get C flag 
+	int getC(){
+		return C;
+	}
+
 	// function to perform cmp instruction
 	void cmp(int r1, int r2){
 		if((r[r1] > 0 && r[r2] > 0)||(r[r1] < 0 && r[r2] < 0)){
@@ -150,7 +165,7 @@ public:
 
 	// function to perform offset
 	void offset(int r1, int offset){
-		r[r1]=r[r1]+offset;
+		r[r1] = r[r1] + offset;
 	}
 
 	// executing the instructions 
@@ -217,12 +232,13 @@ public:
 		}
 	}
 
-	// display the contents of the register file
+	// display the contents of the register file and NZCV flags
 	void display(){
 		for(int j = 0; j < 16; j++){
 			printf("|r%d=%5d",j,r[j]) ;
 		}
 		cout << "|\n";
+		cout << "N :" << getN() << "| " << "Z :" << getZ() << "| " << "C :" << getC() << "|\n"; 
 	}
 
 	void run(vector <instructions> inst_vec){
