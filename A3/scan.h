@@ -520,7 +520,7 @@ int scanLabels(){
 }
 
 // the main scanning function
-int scanMain(){
+int scanMain(string file_name){
 
     string inst; // current instruction
     string op; // for the operation name
@@ -530,7 +530,7 @@ int scanMain(){
 	string label_name ;
 
 	ifstream fin; // to read input from the file
-    fin.open("in.s"); // specify the input file
+    fin.open(file_name); // specify the input file
 
     // till not reached the end of file
     while(!fin.eof()){

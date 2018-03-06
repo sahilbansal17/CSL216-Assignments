@@ -80,12 +80,13 @@ defined in arm.h :
     };
 */
 
-int main(){
+int main(int argc, char * argv[]){
 
     // ofstream fout; // to write output to the file
     // fout.open("out.txt"); // specify the output file
 
-    int status = scanMain(); // used to scan the input and create an instructions vector  
+    string file_name = argv[1];
+    int status = scanMain(file_name); // used to scan the input and create an instructions vector  
 
     if(status == -1){
         cout << "\nTerminating...";
