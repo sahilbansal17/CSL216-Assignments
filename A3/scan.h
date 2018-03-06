@@ -63,10 +63,10 @@ struct Label{
 };
 vector <Label> labels; // to store the labels in the instructions
 
-// increment the pointer j till point of no space
+// increment the pointer j till point of no space ' ' or NO TABS '\t'
 void ignoreSpaces(int &j, string s){
     int len = s.length();
-    while(j < len && s[j] == ' '){
+    while(j < len && (s[j] == ' ' || s[j] == '\t')){
         j ++;
     }
 }
@@ -171,6 +171,8 @@ int scanLabels(){
 
         int j = 0, len_inst = str_inst[i].length();
 
+        ignoreSpaces(j, str_inst[i]); // ignore spaces/tabs in the beginning 
+
         // get the label/operation name
         while(j < len_inst && str_inst[i][j] != ' ' && str_inst[i][j] != ':'){
             lab += str_inst[i][j];
@@ -257,6 +259,7 @@ int scanMain(){
         // cout << "Instruction " << i+1 << ": ";
         int j = 0, len_inst = str_inst[i].length();
 
+        ignoreSpaces(j, str_inst[i]); // ignore spaces/tabs in the beginning 
         // get the operation name
         while(j < len_inst && str_inst[i][j] != ' ' && str_inst[i][j] != ':'){
             op += str_inst[i][j];
