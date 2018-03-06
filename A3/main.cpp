@@ -36,6 +36,7 @@ defined in scan.h :
     vector <string> str_inst;
     int getRegisterValue(int &j, string s);
     int getOperand2(int &j, string s, bool &imm);
+    int getRnOffset(int &j, string s, int &rn, int &offset);
     int checkValidOp(string op);
     int checkValidLabel(string label);
     int scanLabels();
@@ -82,7 +83,7 @@ int main(){
         cout << "\nTerminating...";
     }
     else{
-        myArm.run(inst_vec);
+        // myArm.run(inst_vec);
     } 
 
     // fout.close(); // to close the output file

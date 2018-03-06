@@ -321,10 +321,10 @@ public:
 				pointer ++; // if pointer = pc then increment pointer
 				r[15] += 4; // update PC
 			}
-			if(Debug == 1){
-				char c;
-				scanf("%c",&c);
-			}
+			// if(Debug == 1){
+			// 	char c;
+			// 	scanf("%c",&c);
+			// }
 		}
 	}
 };

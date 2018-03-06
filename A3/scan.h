@@ -84,7 +84,7 @@ int getRegisterValue(int &j, string s){
         5. detect comma
     */
     int res; // result register
-    string res_s; // result string 
+    string res_s; // result string
     ignoreSpaces(j, s);
     if(s[j++] == 'r' || s[j++] == 'R'){
     	while(j < s.length() && s[j] != ' ' && s[j] != ','){
@@ -95,7 +95,7 @@ int getRegisterValue(int &j, string s){
     		res_s += s[j];
     		j ++;
     	}
-        res = stoi(res_s); // convert to integer 
+        res = stoi(res_s); // convert to integer
         if(res >=0 && res <= 15){
         	ignoreSpaces(j, s);
       		if(s[j++] != ','){
@@ -103,7 +103,7 @@ int getRegisterValue(int &j, string s){
         	}
         }
         else{
-        	// not a valid register number 
+        	// not a valid register number
         	return -1;
         }
     }
@@ -123,7 +123,7 @@ int getOperand2(int &j, string s, bool &imm){
         5. detect \n
     */
     int res; // result register
-    string res_s ; // result string 
+    string res_s ; // result string
     ignoreSpaces(j, s);
     if(s[j] == 'r' || s[j] == 'R'){
         j ++; // since we need to check it for #imm2
@@ -135,7 +135,7 @@ int getOperand2(int &j, string s, bool &imm){
     		res_s += s[j];
     		j ++;
     	}
-        res = stoi(res_s); // convert to integer 
+        res = stoi(res_s); // convert to integer
         if(res >=0 && res <= 15){
         	ignoreSpaces(j, s);
         	if(j == s.length() - 1 || s[j]){ // cannot be any value after register number
@@ -143,11 +143,12 @@ int getOperand2(int &j, string s, bool &imm){
         	}
         }
         else{
-        	// not a valid register number 
+        	// not a valid register number
         	return -1;
         }
     }
     else if(s[j++] == '#'){
+    	ignoreSpaces(j, s);
         string num;
         bool neg = 0;
         if(s[j] == '-'){
@@ -167,6 +168,147 @@ int getOperand2(int &j, string s, bool &imm){
         imm = true; // immediate operand
         if(neg == 1){
         	res = -1*res; // accepting neg no in operand2
+        }
+    }
+    else{
+        return -1; //error handling
+    }
+    return res;
+}
+
+// for the load and store instructions, gets the value of rn and offset and appropriate type of ldr/str
+int getRnOffset(int &j, string s, int &rn, int &offset){
+    /* pattern is :
+        1. 	detect [ (already done before)
+        	detect spaces
+        2. 	detect r
+        3. 	detect register number (also check whether valid)
+        4. 	detect spaces
+    */
+	j ++ ; // because of step 1
+    int res; // result register
+    string res_s ; // result string
+    ignoreSpaces(j, s);
+    if(s[j] == 'r' || s[j] == 'R'){
+        j ++; // since we need to check it for #imm2
+        while(j < s.length() && s[j] != ' ' && s[j] != ',' && s[j]!=']'){
+        	// s[j] cannot be other than number, so ascii 48-57
+    		if(s[j] < 48 || s[j] > 57){
+    			return -1;
+    		}
+    		res_s += s[j];
+    		j ++;
+    	}
+        res = stoi(res_s); // convert to integer
+        if(res >=0 && res <= 15){
+        	ignoreSpaces(j, s);
+        }
+        else{
+        	// not a valid register number
+        	return -1;
+        }
+        rn = res;
+        res_s.clear(); // use it again for getting operand 2
+        /*
+        	 5. a) 	detect ] => no offset
+        			a1)	detect end of line
+        			a2)	detect comma and then spaces
+        				detect hash and then spaces
+        				detect offset value and then spaces and then end of line
+        */
+
+        if(s[j++] == ']'){
+        	ignoreSpaces(j, s);
+        	if(j == s.length()){
+        		offset = 0;
+            	return 0;	// no offset, BASIC LDR/STR
+        	}
+        	else{
+        		if(s[j++] != ','){
+        			return -1;
+        		}
+        		ignoreSpaces(j, s);
+        		if(s[j++] != '#'){
+        			return -1;
+        		}
+        		ignoreSpaces(j, s);
+
+        		// detect offset value
+        		string num;
+		        bool neg = 0;
+		        if(s[j] == '-'){
+		        	neg = 1;
+		        	j ++;
+		        }
+		        while(j <= s.length() - 1 && s[j] >= '0' && s[j] <= '9'){
+		            num += s[j];
+		            j ++;
+		        }
+		        if(num.length() > 0) res = stoi(num); // convert string to int
+		        else {
+		        	return -1;
+		        }
+		        ignoreSpaces(j, s);
+		        if(j == s.length() - 1 || s[j]){ // cannot be any value after offset
+		            return -1;
+		        }
+		        if(neg == 1){
+		        	res = -1*res; // accepting neg no in operand2
+		        }
+		        offset = res; // set offset right
+		        return 1; // this is the POST-INDEXED LDR/STR
+        	}
+        }
+        else{
+        	/*
+			5.	b) 	detect comma and then spaces
+					detect # and then spaces
+					detect offset value and then spaces
+					detect ] and then spaces
+					b1)	detect end of line
+					b2) detect spaces and then '!' and then spaces and then end of line
+        	*/
+        	j--;
+        	if(s[j++] != ','){
+        		return -1;
+        	}
+        	ignoreSpaces(j, s);
+        	if(s[j++] != '#'){
+        		return -1;
+        	}
+        	ignoreSpaces(j, s);
+        	// detect offset value
+    		string num;
+	        bool neg = 0;
+	        if(s[j] == '-'){
+	        	neg = 1;
+	        	j ++;
+	        }
+	        while(j <= s.length() - 1 && s[j] >= '0' && s[j] <= '9'){
+	            num += s[j];
+	            j ++;
+	        }
+	        if(num.length() > 0) res = stoi(num); // convert string to int
+	        else return -1;
+	        ignoreSpaces(j, s);
+	        if(neg == 1){
+	        	res = -1*res; // accepting neg no in operand2
+	        }
+	        offset = res; // set offset right
+	        if(s[j++] != ']'){
+	            return -1;
+	        }
+	        ignoreSpaces(j, s);
+	        if(j == s.length()){
+		        return 2; // this is IMMEDIATE OFFSET LDR/STR
+		    }
+		    if(s[j++] == '!'){
+		    	ignoreSpaces(j, s);
+		    	if(j == s.length() - 1 || s[j]){
+		    		return -1;
+		    	}
+		    	return 3; // this is PRE-INDEXED OFFSET
+		    }
         }
     }
     else{
@@ -205,10 +347,10 @@ int scanLabels(){
 
         int j = 0, len_inst = str_inst[i].length();
 
-        ignoreSpaces(j, str_inst[i]); // ignore spaces/tabs in the beginning 
+        ignoreSpaces(j, str_inst[i]); // ignore spaces/tabs in the beginning
 
         if(j == len_inst){
-        	continue; // ignore blank lines 
+        	continue; // ignore blank lines
         }
         // get the label/operation name
         while(j < len_inst && str_inst[i][j] != ' ' && str_inst[i][j] != ':'){
@@ -217,7 +359,7 @@ int scanLabels(){
         }
 
         // maintaining the original case of the lab, we use tempLab
-        string tempLab = lab; // just to check it needs to be transformed to lower case 
+        string tempLab = lab; // just to check it needs to be transformed to lower case
         transform(tempLab.begin(), tempLab.end(), tempLab.begin(), ::tolower); //convert lab to lower case
         // check whether templab is a valid operation name
         int check = checkValidOp(tempLab);
@@ -238,7 +380,7 @@ int scanLabels(){
         			cout << "Instruction " << i+1 << ": Not a valid label (label cannot be followed by any instruction).\n";
         			return -1;
         		}
-        		// check whether a label exists with the same name 
+        		// check whether a label exists with the same name
         		if(checkValidLabel(lab) != -1){
         			cout << "Instruction " << i+1 << ": Cannot declare two labels with the same name.\n";
         			return -1;
@@ -296,10 +438,10 @@ int scanMain(){
         // cout << "Instruction " << i+1 << ": ";
         int j = 0, len_inst = str_inst[i].length();
 
-        ignoreSpaces(j, str_inst[i]); // ignore spaces/tabs in the beginning 
-        
+        ignoreSpaces(j, str_inst[i]); // ignore spaces/tabs in the beginning
+
         if(j == len_inst){
-        	continue; // ignore blank lines 
+        	continue; // ignore blank lines
         }
 
         // get the operation name
@@ -341,7 +483,7 @@ int scanMain(){
 				label_name += str_inst[i][j];
 				j ++;
 			}
-			// no need to transform to lowerCase, labels are case sensitive 
+			// no need to transform to lowerCase, labels are case sensitive
 			int label_addr = checkValidLabel(label_name);
 			if(label_addr != -1){
 				operand2 = label_addr;
@@ -403,6 +545,54 @@ int scanMain(){
 	            return -1;
 			}
 			inst_vec.push_back(instructions(op, 0, rn, operand2, imm)); // rd not needed
+		}
+		else if(op == "str" || op == "ldr"){
+			// get rd
+	        rd = getRegisterValue(j, str_inst[i]);
+	        if(rd == -1){
+	            // error handling
+	            cout << "Instruction " << i+1 << ": Error in rd\n";
+	            return -1;
+	        }
+			ignoreSpaces(j, str_inst[i]);
+			// now check for opening square bracket '['
+			if(str_inst[i][j] == '['){
+				int ldr_str_status = getRnOffset(j, str_inst[i], rn, operand2);
+				if(ldr_str_status == -1){
+					cout << "Instruction " << i+1 << ": Not a valid "<< op << " instruction.\n";
+					return -1;
+				}
+				else if(ldr_str_status == 0){
+					// op = "ldr/str"
+					operand2 = 0; // no offset
+					imm = 0;
+					cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+				}
+				else if(ldr_str_status == 1){
+					// op = "ldrPost/strPost"
+					op += "Post"; imm = 1;
+					cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+				}
+				else if(ldr_str_status == 2){
+					// op = "ldrImm/strImm"
+					op += "Imm"; imm = 1;
+					cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+				}
+				else{
+					// op = "ldrPre/strPre"
+					op += "Pre"; imm = 1;
+					cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+				}
+				inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // rd not needed
+			}
+			// else if(str_inst[i][j] == '='){
+			// 	// ldr arm pseudo instruction
+			// 	j ++;
+			// }
+			else{
+				cout << "Instruction " << i+1 << ": Not a valid "<< op << " instruction.\n";
+				return -1;
+			}
 		}
         op.clear(); // clear the string op
         imm = false; // set immediate operand to be false
