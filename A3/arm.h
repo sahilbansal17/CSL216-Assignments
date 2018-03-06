@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "statistics.h"
 using namespace std;
 
 class ARM{
@@ -10,6 +11,7 @@ private:
 	int Z; // zero Flag
 	int C; // carry Flag
 	vector <int> dlAddress; // to store data label addresses while allocating memory
+	statistics st;
 public:
 	ARM(){
 		for(int i = 0 ; i < 13 ; i ++){
@@ -233,71 +235,92 @@ public:
 
 		if(op == "add"){
 			add(rd, rn, operand2, imm); // call to add function
+			st.counter(op);
 		}
 		else if(op == "sub"){
 			sub(rd, rn, operand2, imm); // call to sub function
+			st.counter(op);
 		}
 		else if(op == "mul"){
 			mul(rd, rn, operand2); // call to mul function
+			st.counter(op);
 		}
 		else if(op == "mov"){
 			mov(rn, operand2, imm); // call to mov function
+			st.counter(op);
 		}
 		else if(op == "ldr"){
 			ldr(rd, rn, 0); // normal ldr with no offset
+			st.counter(op);
 		}
 		else if(op == "ldrImm"){
 			ldr(rd, rn, operand2); // ldr with immediate offset
+			st.counter("ldr");
 		}
 		else if(op == "ldrPre"){
 			offset(rn, operand2); // first update the load address
 			ldr(rd, rn, 0); // pre-indexed ldr
+			st.counter("ldr");
 		}
 		else if(op == "ldrPost"){
 			ldr(rd, rn, 0); // post-indexed ldr
 			offset(rn, operand2); // update the load address later
+			st.counter("ldr");
 		}
 		else if(op == "ldrPseudo"){
 			// cout << "Called";
 			ldrPseudo(rd, operand2); // Pseudo ldr
+			st.counter("ldr");
 		}
 		else if(op == "str"){
 			str(rd, rn, 0); // normal str with no offset
+			st.counter("str");
 		}
 		else if(op == "strImm"){
 			str(rd, rn, operand2); // ldr with immediate offset
+			st.counter("str");
 		}
 		else if(op == "strPre"){
 			offset(rn, operand2); // first update the load address
 			str(rd, rn, 0); // pre-indexed ldr
+			st.counter("str");
 		}
 		else if(op == "strPost"){
 			str(rd, rn, 0); // post-indexed ldr
 			offset(rn, operand2); // update the load address later
+			st.counter("str");
 		}
 		else if(op == "b"){
 			b(operand2);
+			st.counter(op);
 		}
 		else if(op == "bl"){
 			bl(operand2);
+			st.counter(op);
 		}
 		else if(op == "bge"){
 			bge(operand2);
+			st.counter(op);
 		}
 		else if(op == "bne"){
 			bne(operand2);
+			st.counter(op);
 		}
 		else if(op == "beq"){
 			beq(operand2);
+			st.counter(op);
 		}
 		else if(op == "blt"){
 			blt(operand2);
+			st.counter(op);
 		}
 		else if(op == "cmp"){
 			cmp(rn, operand2, imm);
+			st.counter(op);
 		}
 		else if(op == "cmn"){
 			cmn(rn, operand2, imm);
+			st.counter(op);
 		}
 	}
 
@@ -348,8 +371,9 @@ public:
 				scanf("%c",&c);
 			}
 		}
+		cout<<"\n";
+		st.display();
 	}
-
 	void allocate(vector<data_Label> data_labels){
 		for(int i=0; i<data_labels.size(); i++){
 			dlAddress.push_back(startAddress);
