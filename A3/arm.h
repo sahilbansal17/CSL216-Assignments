@@ -14,7 +14,7 @@ public:
 		for(int i = 0 ; i < 15 ; i ++){
 			r[i] = 0;
 		}
-		r[15] = 1000; // instruction addr starts with 1000	
+		r[15] = 1000; // instruction addr starts with 1000
 		for(int i = 0 ; i < 100 ; i ++){
 			memory[i] = 0;
 		}
@@ -52,37 +52,32 @@ public:
 			r[rd] = r[operand2];
 		}
 	}
-	// function to perform ldr instruction  ( in progress )
-	void ldr(int rd, int operand2){
-		r[rd] = memory[operand2];
+	// function to perform ldr instruction
+	void ldr(int rd, int rn, int offset){
+		r[rd] = memory[r[rn] + offset] ;
 	}
 
-	// function to perform ldr offset instruction  ( in progress )
-	void ldr1(int rd, int rn, int offset){
-		r[rd] = memory[rn]+offset;
+	// function to perform str instruction
+	void str(int rd, int rn, int offset){
+		memory[r[rn] + offset] = r[rd];
 	}
 
-	// function to perform str instruction ( in progress )
-	void str(int rd, int operand2){
-		memory[operand2] = r[rd];
-	}
-
-	// function to get register value of a particular reg 
+	// function to get register value of a particular reg
 	int getR_atIndex(int i){
 		return r[i];
 	}
 
-	// function to get N flag 
+	// function to get N flag
 	int getN(){
 		return N;
 	}
 
-	// function to get Z flag 
+	// function to get Z flag
 	int getZ(){
 		return Z;
 	}
 
-	// function to get C flag 
+	// function to get C flag
 	int getC(){
 		return C;
 	}
@@ -107,7 +102,7 @@ public:
 			else{
 				// if r[r2] is less than or equal to r[r1] then no borrow is taken
 				C = 1;
-			}	
+			}
 		}
 		else{
 			val = r[r1] - r2;
@@ -141,24 +136,24 @@ public:
 		int val;
 		if(i == false){
 			val = r[r1] + r[r2];
-			// if one of them is negative and other is 0, then no carry 
+			// if one of them is negative and other is 0, then no carry
 			if(r[r1] == 0 || r[r2] == 0){
 				C = 0;
-			} 
+			}
 			// else if either of them is negative and other is positive, or both negative then C = 1
 			else if(r[r1] < 0 || r[r2] < 0){
 				C = 1;
 			}
-			// else if both +ve then no carry 
+			// else if both +ve then no carry
 			else{
 				C = 0;
 			}
 		}
 		else{
-			val = r[r1] + r2; 
+			val = r[r1] + r2;
 			if(r[r1] == 0 || r2 == 0){
 				C = 0;
-			} 
+			}
 			else if(r[r1] < 0 || r2 < 0){
 				C = 1;
 			}
@@ -178,7 +173,7 @@ public:
 
 	// function to perform bge instruction
 	void bge(int label){
-		if(N == 0 && Z == 0){
+		if(N == 0){
 			r[15] = label;
 		}
 	}
@@ -197,8 +192,8 @@ public:
 
 	// function to perform bl instruction
 	void bl(int label){
-		r[14] = r[15] + 4;	// pointing LR to net instruction of pc
-		r[15] = label;		// updating pc to label
+		r[14] = r[15] + 4;	// updating LR to next instruction address
+		r[15] = label;		// updating pc to label address
 	}
 
 	// function to perform blt instruction
@@ -210,7 +205,7 @@ public:
 
 	// function to perform bne instruction
 	void bne(int label){
-		if(Z != 1){
+		if(Z == 0){
 			r[15] = label;
 		}
 	}
@@ -220,9 +215,9 @@ public:
 		r[r1] = r[r1] + offset;
 	}
 
-	// executing the instructions 
+	// executing the instructions
 	void execute(instructions i){
-		// get the instruction parameters 
+		// get the instruction parameters
 		string op = i.getOp();
 		int rd = i.getRd();
 		int rn = i.getRn();
@@ -242,21 +237,32 @@ public:
 			mov(rn, operand2, imm); // call to mov function
 		}
 		else if(op == "ldr"){
-			ldr(rd, rn);
+			ldr(rd, rn, 0); // normal ldr with no offset
 		}
-		else if(op == "ldr1"){
-			ldr1(rd, rn, operand2);
+		else if(op == "ldrImm"){
+			ldr(rd, rn, operand2); // ldr with immediate offset
 		}
-		else if(op == "ldr2"){
-			offset(rn, operand2);
-			ldr(rd, rn);
+		else if(op == "ldrPre"){
+			offset(rn, operand2); // first update the load address
+			ldr(rd, rn, 0); // pre-indexed ldr
 		}
-		else if(op == "ldr3"){
-			ldr(rd, rn);
-			offset(rn, operand2);
+		else if(op == "ldrPost"){
+			ldr(rd, rn, 0); // post-indexed ldr
+			offset(rn, operand2); // update the load address later
 		}
 		else if(op == "str"){
-			str(rd, operand2);
+			str(rd, operand2, 0); // normal str with no offset
+		}
+		else if(op == "strImm"){
+			str(rd, rn, operand2); // ldr with immediate offset
+		}
+		else if(op == "strPre"){
+			offset(rn, operand2); // first update the load address
+			str(rd, rn, 0); // pre-indexed ldr
+		}
+		else if(op == "strPost"){
+			str(rd, rn, 0); // post-indexed ldr
+			offset(rn, operand2); // update the load address later
 		}
 		else if(op == "b"){
 			b(operand2);
@@ -290,7 +296,7 @@ public:
 			printf("|r%d=%2d",j,r[j]) ;
 		}
 		cout << "|\n";
-		cout << "N :" << getN() << "| " << "Z :" << getZ() << "| " << "C :" << getC() << "|\n"; 
+		cout << "N :" << getN() << "| " << "Z :" << getZ() << "| " << "C :" << getC() << "|\n";
 	}
 
 	void run(vector <instructions> inst_vec){
@@ -301,18 +307,18 @@ public:
 			newPC = r[15];
 			execute(inst_vec[pointer]);   // execute the ith instruction
 			if(r[15] != old){
-				newPC = r[15]; // if PC has changed then store new value and 
+				newPC = r[15]; // if PC has changed then store new value and
 				r[15] = old; // old value back to PC for display
 			}
 			display(); // display the contents of register
-			
+
 			r[15] = newPC;
 			if(r[15] != old){
 				// check whether pc is changed after the execution of instruction
-				pointer = (r[15] - 1000)/4; // update the pointer 
+				pointer = (r[15] - 1000)/4; // update the pointer
 			}
 			else{
-				pointer ++; // if pointer = pc then increment pointer 
+				pointer ++; // if pointer = pc then increment pointer
 				r[15] += 4; // update PC
 			}
 			// if(Debug == 1){
