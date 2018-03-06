@@ -1,5 +1,5 @@
-// This file contains all code relevant to parsing of the instructions and also the class named instructions.
-// #include <stack> // used for assigning labels in one pass of the instructions
+// This file contains all code relevant to parsing of the instructions and also the class named instructions,
+// structure named labels for storing label names and their addresses
 using namespace std;
 
 class instructions{
@@ -51,17 +51,20 @@ public:
 	}
 };
 
+struct Label{
+    string label_name;
+    int addr;
+};
+
 vector <instructions> inst_vec; // vector of instructions class type object
 // used so that we need to rescan the entire instruction, rather storing it in a format
 
 string supportedInst[14]={"add", "sub", "mul", "mov", "ldr", "str", "cmp", "cmn", "bge", "b", "beq", "bne", "bl", "blt"};
 int numSupported = 14;
 
-struct Label{
-    string label_name;
-    int addr;
-};
 vector <Label> labels; // to store the labels in the instructions
+
+vector <string> str_inst; // vector of instructions string type
 
 // increment the pointer j till point of no space ' ' or NO TABS '\t'
 void ignoreSpaces(int &j, string s){
@@ -157,11 +160,6 @@ int checkValidLabel(string label){
 	return -1;
 }
 
-
-// stack <int> unassignedLabels;
-
-vector <string> str_inst; // vector of instructions string type
-
 int scanLabels(){
 
     string lab; // for the label name
@@ -226,7 +224,6 @@ int scanLabels(){
     return 1;
 
 }
-
 
 // the main scanning function
 int scanMain(){

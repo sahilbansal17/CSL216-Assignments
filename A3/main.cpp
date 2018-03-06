@@ -10,14 +10,66 @@ using namespace std;
 ARM myArm;
 /* 
 defined in scan.h :
-    class instructions; 
+    class instructions{
+    private: string op; int rd, rn, operand2; bool imm;
+    public:
+        instructions();
+        instructions(string _op, int _rd, int _rn, int _op2, bool _imm);
+        string getOp();
+        int getRd();
+        int getRn();
+        int getOp2();
+        bool getImm();
+        void setOp(string s);
+        void setRd(int r);
+        void setRn(int r);
+        void setOp2(int r);
+    }; 
+    struct Label{
+        string label_name;
+        int addr;
+    };
+    string supportedInst[];
     vector <instructions> inst_vec;
+    int numSupported;
+    vector <Label> labels;
+    vector <string> str_inst;
     int getRegisterValue(int &j, string s);
     int getOperand2(int &j, string s, bool &imm);
+    int checkValidOp(string op);
+    int checkValidLabel(string label);
+    int scanLabels();
     int scanMain();
 
 defined in arm.h :
-    class ARM;
+    class ARM{
+    private: int r[16], memory[100], startAddress, N, Z, C;
+    public:
+        ARM(); 
+        void add(int rd, int rn, int operand2, bool i);
+        void sub(int rd, int rn, int operand2, bool i);
+        void mul(int rd, int rn, int operand2);
+        void mov(int rd, int operand2, bool i);
+        void ldr(int rd, int operand2);
+        void ldr1(int rd, int rn, int offset);
+        void str(int rd, int operand2);
+        int getR_atIndex(int i);
+        int getN();
+        int getZ();
+        int getC();
+        void cmp(int r1, int r2);
+        void cmn(int r1, int r2);
+        void bge(int label);
+        void b(int label);
+        void beq(int label);
+        void bl(int label);
+        void blt(int label);
+        void bne(int label);
+        void offset(int r1, int offset);
+        void execute(instructions i);
+        void display();
+        void run(vector <instructions> inst_vec);
+    };
 */
 
 int main(){
