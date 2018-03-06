@@ -172,6 +172,30 @@ int getOperand2(int &j, string s, bool &imm){
         	return -1;
         }
     }
+    else if((s[j] == 's' && s[j+1] == 'p') || (s[j] == 'S' && s[j+1] == 'P')){
+		j += 2;
+		ignoreSpaces(j, s);
+		if(j == s.length() - 1 || s[j]){ // cannot be any value after register number
+            return -1;
+        }
+		res = 13;
+	}
+	else if((s[j] == 'l' && s[j+1] == 'r') || (s[j] == 'L' && s[j+1] == 'R')){
+		j += 2;
+		ignoreSpaces(j, s);
+		if(j == s.length() - 1 || s[j]){ // cannot be any value after register number
+            return -1;
+        }
+		res = 14;
+	}
+	else if((s[j] == 'p' && s[j+1] == 'c') || (s[j] == 'P' && s[j+1] == 'C')){
+		j += 2;
+		ignoreSpaces(j, s);
+		if(j == s.length() - 1 || s[j]){ // cannot be any value after register number
+            return -1;
+        }
+		res = 15;
+	}
     else if(s[j++] == '#'){
     	ignoreSpaces(j, s);
         string num;
@@ -232,77 +256,52 @@ int getRnOffset(int &j, string s, int &rn, int &offset){
         	// not a valid register number
         	return -1;
         }
-        rn = res;
-        res_s.clear(); // use it again for getting operand 2
-        /*
-        	 5. a) 	detect ] => no offset
-        			a1)	detect end of line
-        			a2)	detect comma and then spaces
-        				detect hash and then spaces
-        				detect offset value and then spaces and then end of line
-        */
+    }
+    else if((s[j] == 's' && s[j+1] == 'p') || (s[j] == 'S' && s[j+1] == 'P')){
+		j += 2;
+		ignoreSpaces(j, s);
+		res = 13;
+	}
+	else if((s[j] == 'l' && s[j+1] == 'r') || (s[j] == 'L' && s[j+1] == 'R')){
+		j += 2;
+		ignoreSpaces(j, s);
+		res = 14;
+	}
+	else if((s[j] == 'p' && s[j+1] == 'c') || (s[j] == 'P' && s[j+1] == 'C')){
+		j += 2;
+		ignoreSpaces(j, s);
+		res = 15;
+	}
+	else{
+        return -1; //error handling
+    }
+    rn = res;
+    res_s.clear(); // use it again for getting operand 2
+    /*
+    	 5. a) 	detect ] => no offset
+    			a1)	detect end of line
+    			a2)	detect comma and then spaces
+    				detect hash and then spaces
+    				detect offset value and then spaces and then end of line
+    */
 
-        if(s[j++] == ']'){
-        	ignoreSpaces(j, s);
-        	if(j == s.length()){
-        		offset = 0;
-            	return 0;	// no offset, BASIC LDR/STR
-        	}
-        	else{
-        		if(s[j++] != ','){
-        			return -1;
-        		}
-        		ignoreSpaces(j, s);
-        		if(s[j++] != '#'){
-        			return -1;
-        		}
-        		ignoreSpaces(j, s);
+    if(s[j++] == ']'){
+    	ignoreSpaces(j, s);
+    	if(j == s.length()){
+    		offset = 0;
+        	return 0;	// no offset, BASIC LDR/STR
+    	}
+    	else{
+    		if(s[j++] != ','){
+    			return -1;
+    		}
+    		ignoreSpaces(j, s);
+    		if(s[j++] != '#'){
+    			return -1;
+    		}
+    		ignoreSpaces(j, s);
 
-        		// detect offset value
-        		string num;
-		        bool neg = 0;
-		        if(s[j] == '-'){
-		        	neg = 1;
-		        	j ++;
-		        }
-		        while(j <= s.length() - 1 && s[j] >= '0' && s[j] <= '9'){
-		            num += s[j];
-		            j ++;
-		        }
-		        if(num.length() > 0) res = stoi(num); // convert string to int
-		        else {
-		        	return -1;
-		        }
-		        ignoreSpaces(j, s);
-		        if(j == s.length() - 1 || s[j]){ // cannot be any value after offset
-		            return -1;
-		        }
-		        if(neg == 1){
-		        	res = -1*res; // accepting neg no in operand2
-		        }
-		        offset = res; // set offset right
-		        return 1; // this is the POST-INDEXED LDR/STR
-        	}
-        }
-        else{
-        	/*
-			5.	b) 	detect comma and then spaces
-					detect # and then spaces
-					detect offset value and then spaces
-					detect ] and then spaces
-					b1)	detect end of line
-					b2) detect spaces and then '!' and then spaces and then end of line
-        	*/
-        	j--;
-        	if(s[j++] != ','){
-        		return -1;
-        	}
-        	ignoreSpaces(j, s);
-        	if(s[j++] != '#'){
-        		return -1;
-        	}
-        	ignoreSpaces(j, s);
-        	// detect offset value
+    		// detect offset value
     		string num;
 	        bool neg = 0;
 	        if(s[j] == '-'){
@@ -314,30 +313,70 @@ int getRnOffset(int &j, string s, int &rn, int &offset){
 	            j ++;
 	        }
 	        if(num.length() > 0) res = stoi(num); // convert string to int
-	        else return -1;
+	        else {
+	        	return -1;
+	        }
 	        ignoreSpaces(j, s);
+	        if(j == s.length() - 1 || s[j]){ // cannot be any value after offset
+	            return -1;
+	        }
 	        if(neg == 1){
 	        	res = -1*res; // accepting neg no in operand2
 	        }
 	        offset = res; // set offset right
-	        if(s[j++] != ']'){
-	            return -1;
-	        }
-	        ignoreSpaces(j, s);
-	        if(j == s.length()){
-		        return 2; // this is IMMEDIATE OFFSET LDR/STR
-		    }
-		    if(s[j++] == '!'){
-		    	ignoreSpaces(j, s);
-		    	if(j == s.length() - 1 || s[j]){
-		    		return -1;
-		    	}
-		    	return 3; // this is PRE-INDEXED OFFSET
-		    }
-        }
+	        return 1; // this is the POST-INDEXED LDR/STR
+    	}
     }
     else{
-        return -1; //error handling
+    	/*
+		5.	b) 	detect comma and then spaces
+				detect # and then spaces
+				detect offset value and then spaces
+				detect ] and then spaces
+				b1)	detect end of line
+				b2) detect spaces and then '!' and then spaces and then end of line
+    	*/
+    	j--;
+    	if(s[j++] != ','){
+    		return -1;
+    	}
+    	ignoreSpaces(j, s);
+    	if(s[j++] != '#'){
+    		return -1;
+    	}
+    	ignoreSpaces(j, s);
+    	// detect offset value
+		string num;
+        bool neg = 0;
+        if(s[j] == '-'){
+        	neg = 1;
+        	j ++;
+        }
+        while(j <= s.length() - 1 && s[j] >= '0' && s[j] <= '9'){
+            num += s[j];
+            j ++;
+        }
+        if(num.length() > 0) res = stoi(num); // convert string to int
+        else return -1;
+        ignoreSpaces(j, s);
+        if(neg == 1){
+        	res = -1*res; // accepting neg no in operand2
+        }
+        offset = res; // set offset right
+        if(s[j++] != ']'){
+            return -1;
+        }
+        ignoreSpaces(j, s);
+        if(j == s.length()){
+	        return 2; // this is IMMEDIATE OFFSET LDR/STR
+	    }
+	    if(s[j++] == '!'){
+	    	ignoreSpaces(j, s);
+	    	if(j == s.length() - 1 || s[j]){
+	    		return -1;
+	    	}
+	    	return 3; // this is PRE-INDEXED OFFSET
+	    }
     }
     return res;
 }
