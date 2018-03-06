@@ -263,7 +263,7 @@ int scanMain(){
 	string label_name ;
 
 	ifstream fin; // to read input from the file
-    fin.open("in.txt"); // specify the input file
+    fin.open("in.s"); // specify the input file
 
     // till not reached the end of file
     while(!fin.eof()){
@@ -373,7 +373,7 @@ int scanMain(){
 	        }
 	        inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // push to the instructions class vector
 	    }
-    	else if(op == "cmp" || op == "mov"){
+    	else if(op == "cmp" || op == "mov" || op == "cmn"){
 			rn = getRegisterValue(j, str_inst[i]);
 			if(rn == -1){
 				cout << "Instruction " << i+1 << ": Error in rn\n";

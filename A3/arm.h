@@ -88,39 +88,91 @@ public:
 	}
 
 	// function to perform cmp instruction
-	void cmp(int r1, int r2){
-		if((r[r1] > 0 && r[r2] > 0)||(r[r1] < 0 && r[r2] < 0)){
-			if(r[r1] - r[r2]<0){
-				N = 1;
+	void cmp(int r1, int r2, bool i){
+		int val;
+		if(i == false){
+			val = r[r1] - r[r2];
+			if(r[r1] > 0 && r[r2] < 0){
+				// no borrow is taken in this case
+				C = 0;
 			}
-			else if(r[r1] - r[r2] == 0){
-				Z = 1;
+			else if(r[r1] < 0 && r[r2] > 0){
+				// borrow is taken
+				C = 1;
+			}
+			else if(r[r1] < r[r2]){
+				// if r[r2] is greater than r[r1] then borrow is taken
+				C = 0;
+			}
+			else{
+				// if r[r2] is less than or equal to r[r1] then no borrow is taken
+				C = 1;
+			}	
+		}
+		else{
+			val = r[r1] - r2;
+			if(r[r1] > 0 && r2 < 0){
+				C = 0;
+			}
+			else if(r[r1] < 0 && r2 > 0){
+				C = 1;
+			}
+			else if(r[r1] < r2){
+				C = 0;
+			}
+			else{
 				C = 1;
 			}
 		}
-		else cmn(r1, r2);
+		if(val < 0){
+			// if difference is less than 0 then N = 1
+			N = 1;
+			Z = 0;
+		}
+		else if(val == 0){
+			// if difference is zero then Z = 0
+			Z = 1;
+			N = 0;
+		}
 	}
 
 	// function to perform cmn instruction
-	void cmn(int r1, int r2){
-		if((r[r1] > 0 && r[r2] > 0)||(r[r1] < 0 && r[r2] < 0)){
-			cmp(r1, r2);
-		}
-		else if(r[r1] > 0 && r[r2] < 0){
-			if(r[r1] + r[r2] < 0){
-				N = 1;
+	void cmn(int r1, int r2, bool i){
+		int val;
+		if(i == false){
+			val = r[r1] + r[r2];
+			// if one of them is negative and other is 0, then no carry 
+			if(r[r1] == 0 || r[r2] == 0){
+				C = 0;
+			} 
+			// else if either of them is negative and other is positive, or both negative then C = 1
+			else if(r[r1] < 0 || r[r2] < 0){
+				C = 1;
 			}
-			else if(r[r1] + r[r2] == 0){
-				Z = 1;
+			// else if both +ve then no carry 
+			else{
+				C = 0;
 			}
 		}
 		else{
-			if(r[r1] + r[r2] > 0){
-				N = 1;
+			val = r[r1] + r2; 
+			if(r[r1] == 0 || r2 == 0){
+				C = 0;
+			} 
+			else if(r[r1] < 0 || r2 < 0){
+				C = 1;
 			}
-			else if(r[r1] + r[r2] == 0){
-				Z = 1;
-			}        
+			else{
+				C = 0;
+			}
+		}
+		if(val < 0){
+			N = 1;
+			Z = 0;
+		}
+		else if(val == 0){
+			Z = 1;
+			N = 0;
 		}
 	}
 
@@ -225,10 +277,10 @@ public:
 			blt(operand2);
 		}
 		else if(op == "cmp"){
-			cmp(rn, operand2);
+			cmp(rn, operand2, imm);
 		}
 		else if(op == "cmn"){
-			cmn(rn, operand2);
+			cmn(rn, operand2, imm);
 		}
 	}
 
