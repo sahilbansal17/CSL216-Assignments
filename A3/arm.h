@@ -178,16 +178,16 @@ public:
 		bool imm = i.getImm();
 
 		if(op == "add"){
-			add(rd, rn, operand2, imm); //call to add function
+			add(rd, rn, operand2, imm); // call to add function
 		}
 		else if(op == "sub"){
-			sub(rd, rn, operand2, imm); //call to sub function
+			sub(rd, rn, operand2, imm); // call to sub function
 		}
 		else if(op == "mul"){
-			mul(rd, rn, operand2); //call to mul function
+			mul(rd, rn, operand2); // call to mul function
 		}
 		else if(op == "mov"){
-			mov(rd, operand2, imm); //call to mov function
+			mov(rn, operand2, imm); // call to mov function
 		}
 		else if(op == "ldr"){
 			ldr(rd, rn);
@@ -235,7 +235,7 @@ public:
 	// display the contents of the register file and NZCV flags
 	void display(){
 		for(int j = 0; j < 16; j++){
-			printf("|r%d=%5d",j,r[j]) ;
+			printf("|r%d=%2d",j,r[j]) ;
 		}
 		cout << "|\n";
 		cout << "N :" << getN() << "| " << "Z :" << getZ() << "| " << "C :" << getC() << "|\n"; 

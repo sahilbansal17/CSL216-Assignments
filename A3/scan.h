@@ -79,18 +79,32 @@ int getRegisterValue(int &j, string s){
     /* pattern is :
         1. detect spaces
         2. detect r
-        3. detect register number
+        3. detect register number (also check whether valid)
         4. detect spaces
         5. detect comma
     */
     int res; // result register
+    string res_s; // result string 
     ignoreSpaces(j, s);
     if(s[j++] == 'r' || s[j++] == 'R'){
-        res = s[j++]; // assuming r0-r9
-        res -= 48; // get correct number from 0 to 9
-        ignoreSpaces(j, s);
-        if(s[j++] != ','){
-            return -1;
+    	while(j < s.length() && s[j] != ' ' && s[j] != ','){
+    		// s[j] cannot be other than number, so ascii 48-57
+    		if(s[j] < 48 || s[j] > 57){
+    			return -1;
+    		}
+    		res_s += s[j];
+    		j ++;
+    	}
+        res = stoi(res_s); // convert to integer 
+        if(res >=0 && res <= 15){
+        	ignoreSpaces(j, s);
+      		if(s[j++] != ','){
+            	return -1;
+        	}
+        }
+        else{
+        	// not a valid register number 
+        	return -1;
         }
     }
     else{
@@ -104,20 +118,33 @@ int getOperand2(int &j, string s, bool &imm){
     /* pattern is :
         1. detect spaces
         2. detect r
-        3. detect register number
+        3. detect register number (also check whether valid)
         4. detect spaces
         5. detect \n
     */
     int res; // result register
+    string res_s ; // result string 
     ignoreSpaces(j, s);
     if(s[j] == 'r' || s[j] == 'R'){
         j ++; // since we need to check it for #imm2
-        res = s[j++]; // assuming r0-r9
-        res -= 48; // get correct number from 0 to 9
-        ignoreSpaces(j, s);
-        // cout << s[j];
-        if(j == s.length() - 1 || s[j]){ // cannot be any value after register number
-            return -1;
+        while(j < s.length() && s[j] != ' '){
+        	// s[j] cannot be other than number, so ascii 48-57
+    		if(s[j] < 48 || s[j] > 57){
+    			return -1;
+    		}
+    		res_s += s[j];
+    		j ++;
+    	}
+        res = stoi(res_s); // convert to integer 
+        if(res >=0 && res <= 15){
+        	ignoreSpaces(j, s);
+        	if(j == s.length() - 1 || s[j]){ // cannot be any value after register number
+            	return -1;
+        	}
+        }
+        else{
+        	// not a valid register number 
+        	return -1;
         }
     }
     else if(s[j++] == '#'){
@@ -312,7 +339,7 @@ int scanMain(){
 				return -1;
 			}
 		}
-		else if(op == "add" || op == "sub"){
+		else if(op == "add" || op == "sub" || op == "mul"){
 	        // get rd
 	        rd = getRegisterValue(j, str_inst[i]);
 	        if(rd == -1){
@@ -334,9 +361,19 @@ int scanMain(){
 	            cout << "Instruction " << i+1 << ": Error in operand2\n";
 	            return -1;
 	        }
+	        if(op == "mul"){
+	        	if(imm == 1){
+	        		cout << "Instruction " << i+1 << ": Error in operand2, MUL doesn't support immediate operand.\n";
+	        		return -1;
+	        	}
+	        	if(rd == rn){
+	        		cout << "Instruction " << i+1 << ": MUL can't have the same register for rd and rn.\n";
+	        		return -1;
+	        	}
+	        }
 	        inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // push to the instructions class vector
 	    }
-    	else if(op == "cmp"){
+    	else if(op == "cmp" || op == "mov"){
 			rn = getRegisterValue(j, str_inst[i]);
 			if(rn == -1){
 				cout << "Instruction " << i+1 << ": Error in rn\n";
@@ -347,7 +384,7 @@ int scanMain(){
 				cout << "Instruction " << i+1 << ": Error in operand2\n";
 	            return -1;
 			}
-			inst_vec.push_back(instructions(op, 0, rn, operand2, imm));
+			inst_vec.push_back(instructions(op, 0, rn, operand2, imm)); // rd not needed
 		}
         op.clear(); // clear the string op
         imm = false; // set immediate operand to be false
