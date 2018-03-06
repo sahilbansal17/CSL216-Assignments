@@ -83,6 +83,7 @@ int main(){
         cout << "\nTerminating...";
     }
     else{
+        myArm.allocate(data_labels);
         myArm.run(inst_vec);
     } 
 

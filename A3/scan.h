@@ -56,6 +56,12 @@ struct Label{
     int addr;
 };
 
+struct data_Label{
+	string label_name;
+	int addr;
+	int size;
+};
+
 vector <instructions> inst_vec; // vector of instructions class type object
 // used so that we need to rescan the entire instruction, rather storing it in a format
 
@@ -63,6 +69,8 @@ string supportedInst[14]={"add", "sub", "mul", "mov", "ldr", "str", "cmp", "cmn"
 int numSupported = 14;
 
 vector <Label> labels; // to store the labels in the instructions
+
+vector <data_Label> data_labels; // to store the data labels in the instructions
 
 vector <string> str_inst; // vector of instructions string type
 

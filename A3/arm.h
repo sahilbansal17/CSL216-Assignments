@@ -11,9 +11,11 @@ private:
 	int C; // carry Flag
 public:
 	ARM(){
-		for(int i = 0 ; i < 15 ; i ++){
+		for(int i = 0 ; i < 13 ; i ++){
 			r[i] = 0;
 		}
+		r[13] = 1400; // stack pointer pointing at the end of memory location
+		r[14] = 0;
 		r[15] = 1000; // instruction addr starts with 1000
 		for(int i = 0 ; i < 100 ; i ++){
 			memory[i] = 0;
@@ -55,6 +57,10 @@ public:
 	// function to perform ldr instruction
 	void ldr(int rd, int rn, int offset){
 		r[rd] = memory[(r[rn] + offset-1000)/4] ;
+	}
+	// function to read memory at a given addr
+	void ldrPseudo(int rd, int operand2){
+		r[rd] = memory[operand2] ;
 	}
 
 	// function to perform str instruction
@@ -250,6 +256,9 @@ public:
 			ldr(rd, rn, 0); // post-indexed ldr
 			offset(rn, operand2); // update the load address later
 		}
+		else if(op == "ldrPseudo"){
+			ldrPseudo(rd, operand2); // Pseudo ldr
+		}
 		else if(op == "str"){
 			str(rd, operand2, 0); // normal str with no offset
 		}
@@ -292,11 +301,20 @@ public:
 
 	// display the contents of the register file and NZCV flags
 	void display(){
+		cout << "Registers --";
 		for(int j = 0; j < 16; j++){
-			printf("|r%d=%2d",j,r[j]) ;
+			printf("|r%d=%2d",j,r[j]);
 		}
 		cout << "|\n";
+		cout << "Flags --";
 		cout << "N :" << getN() << "| " << "Z :" << getZ() << "| " << "C :" << getC() << "|\n";
+		cout << "Memory Filled --";
+		for(int j = 0; j < 100 ; j++){
+			if(memory[j] != 0){
+				printf("|(%d)=%2d",j*4+1000,memory[j]); 
+			}
+		}
+		cout << "|\n";
 	}
 
 	void run(vector <instructions> inst_vec){
@@ -325,6 +343,13 @@ public:
 			// 	char c;
 			// 	scanf("%c",&c);
 			// }
+		}
+	}
+
+	void allocate(vector<data_Label> data_labels){
+		for(int i=0; i<data_labels.size(); i++){
+			data_labels[i].addr = startAddress;
+			startAddress += ((data_labels[i].size)/4)*4;
 		}
 	}
 };
