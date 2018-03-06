@@ -86,7 +86,8 @@ int getRegisterValue(int &j, string s){
     int res; // result register
     string res_s; // result string
     ignoreSpaces(j, s);
-    if(s[j++] == 'r' || s[j++] == 'R'){
+    if(s[j] == 'r' || s[j] == 'R'){
+		j += 1;
     	while(j < s.length() && s[j] != ' ' && s[j] != ','){
     		// s[j] cannot be other than number, so ascii 48-57
     		if(s[j] < 48 || s[j] > 57){
@@ -95,8 +96,8 @@ int getRegisterValue(int &j, string s){
     		res_s += s[j];
     		j ++;
     	}
-        res = stoi(res_s); // convert to integer
-        if(res >=0 && res <= 15){
+        res = stoi(res_s); // convert to integer 
+        if(res >= 0 && res <= 15){
         	ignoreSpaces(j, s);
       		if(s[j++] != ','){
             	return -1;
@@ -107,6 +108,30 @@ int getRegisterValue(int &j, string s){
         	return -1;
         }
     }
+	else if((s[j] == 's' && s[j+1] == 'p') || (s[j] == 'S' && s[j+1] == 'P')){
+		j += 2;
+		ignoreSpaces(j, s);
+		if(s[j++] != ','){
+			return -1;
+		}
+		res = 13;
+	}
+	else if((s[j] == 'l' && s[j+1] == 'r') || (s[j] == 'L' && s[j+1] == 'R')){
+		j += 2;
+		ignoreSpaces(j, s);
+		if(s[j++] != ','){
+			return -1;
+		}
+		res = 14;
+	}
+	else if((s[j] == 'p' && s[j+1] == 'c') || (s[j] == 'P' && s[j+1] == 'C')){
+		j += 2;
+		ignoreSpaces(j, s);
+		if(s[j++] != ','){
+			return -1;
+		}
+		res = 15;
+	}
     else{
         return -1; //error handling
     }
@@ -367,7 +392,7 @@ int scanLabels(){
         if(check == 0){
         	// check whether it can be a label
         	// 1. ignore Spaces
-        	ignoreSpaces(j, str_inst[i]);
+        	// ignoreSpaces(j, str_inst[i]);
         	// 2. check for ':', i.e. a colon
         	if(str_inst[i][j++] != ':'){
         		cout << "Instruction " << i+1 << ": Neither a valid operation nor a valid label.\n";
@@ -566,22 +591,22 @@ int scanMain(){
 					// op = "ldr/str"
 					operand2 = 0; // no offset
 					imm = 0;
-					cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+					// cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
 				}
 				else if(ldr_str_status == 1){
 					// op = "ldrPost/strPost"
 					op += "Post"; imm = 1;
-					cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+					// cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
 				}
 				else if(ldr_str_status == 2){
 					// op = "ldrImm/strImm"
 					op += "Imm"; imm = 1;
-					cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+					// cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
 				}
 				else{
 					// op = "ldrPre/strPre"
 					op += "Pre"; imm = 1;
-					cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
+					// cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
 				}
 				inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // rd not needed
 			}

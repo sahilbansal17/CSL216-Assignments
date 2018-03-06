@@ -1,6 +1,4 @@
-ldr     r0   ,    [    r5 , # 99    ]!  
-ldr r0,[r1,#444 ]!   
-ldr     r0   ,    [    r5    ]
-ldr r0, [r1], #54 
-ldr r0, [ r1, #-444 ]
-ldr r0,[r1]
+mov r0,#1004
+mov r1,#786
+str r1,[r0,#4]
+ldr sp,[r0,#4]

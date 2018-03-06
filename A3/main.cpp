@@ -83,7 +83,7 @@ int main(){
         cout << "\nTerminating...";
     }
     else{
-        // myArm.run(inst_vec);
+        myArm.run(inst_vec);
     } 
 
     // fout.close(); // to close the output file

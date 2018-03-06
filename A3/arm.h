@@ -54,12 +54,12 @@ public:
 	}
 	// function to perform ldr instruction
 	void ldr(int rd, int rn, int offset){
-		r[rd] = memory[r[rn] + offset] ;
+		r[rd] = memory[(r[rn] + offset-1000)/4] ;
 	}
 
 	// function to perform str instruction
 	void str(int rd, int rn, int offset){
-		memory[r[rn] + offset] = r[rd];
+		memory[(r[rn] + offset-1000)/4] = r[rd];
 	}
 
 	// function to get register value of a particular reg
