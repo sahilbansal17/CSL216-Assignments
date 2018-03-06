@@ -1,3 +1,7 @@
+main:
+mov r0, #4
+bl fact
+b exit  
 fact:
 SUB SP, SP, #8
 STR LR, [SP, #4]
@@ -13,5 +17,7 @@ MOV r12, r0
 LDR r0, [SP, #0]
 LDR LR, [SP, #4]
 ADD SP, SP, #8
-MUL r0, r0, r12
+mov r1, r0
+MUL r0, r1, r12
 MOV pc, lr 
+exit:

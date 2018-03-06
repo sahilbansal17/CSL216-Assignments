@@ -58,7 +58,6 @@ struct Label{
 
 struct data_Label{
 	string label_name;
-	int addr;
 	int size;
 };
 
@@ -104,7 +103,7 @@ int getRegisterValue(int &j, string s){
     		res_s += s[j];
     		j ++;
     	}
-        res = stoi(res_s); // convert to integer 
+        res = stoi(res_s); // convert to integer
         if(res >= 0 && res <= 15){
         	ignoreSpaces(j, s);
       		if(s[j++] != ','){
@@ -399,11 +398,20 @@ int checkValidOp(string op){
 	return 0;
 }
 
-// checks whether an Label exists or not
+// checks whether a instruction label exists or not
 int checkValidLabel(string label){
 	for(int i = 0 ; i < labels.size() ; i++){
 		if(label == labels[i].label_name){
 			return labels[i].addr; // if it exists then return its address
+		}
+	}
+	return -1;
+}
+// checks whethea a data label exists or not
+int checkValidDataLabel(string label){
+	for(int i = 0 ; i < data_labels.size() ; i++){
+		if(label == data_labels[i].label_name){
+			return i; // if it exists then return its index
 		}
 	}
 	return -1;
@@ -449,6 +457,38 @@ int scanLabels(){
         		ignoreSpaces(j, str_inst[i]);
         		// should be nothing after the colon and whitespaces
         		if(j == len_inst - 1 || str_inst[i][j]){
+					if(str_inst[i][j] == '.'){
+						// case when it is an assembler directive
+						// currently only .space is supported
+						j ++;
+						string directive, val;
+						while(j < len_inst && str_inst[i][j] != ' '){
+							directive += str_inst[i][j];
+							j ++;
+						}
+						if(directive != "space"){
+							cout << "Instruction " << i+1 << ": Currently only .space directive is supported.\n";
+							return -1;
+						}
+						ignoreSpaces(j, str_inst[i]);
+						while(j < len_inst && str_inst[i][j] != ' '){
+							if(str_inst[i][j] >= 48 && str_inst[i][j] <= 57){
+								val += str_inst[i][j];
+							}
+							else{
+								cout << "Instruction " << i+1 << ": Value incorret in .space directive.\n";
+								return -1;
+							}
+							j ++;
+						}
+						int amount = stoi(val);
+						data_Label dl ;
+						dl.label_name = lab;
+						dl.size = amount;
+						data_labels.push_back(dl);
+						lab.clear();
+						continue;
+					}
         			cout << "Instruction " << i+1 << ": Not a valid label (label cannot be followed by any instruction).\n";
         			return -1;
         		}
@@ -472,7 +512,7 @@ int scanLabels(){
         }
 
     }
-    int num_labels = labels.size(); // no of labels
+    int num_labels = labels.size() + data_labels.size(); // no of labels
     cout << "Number of labels: " << num_labels << "\n";
 
     return 1;
@@ -521,6 +561,8 @@ int scanMain(){
             op += str_inst[i][j];
             j ++;
         }
+
+        string temp_dl = op ; // to check a data label
         transform(op.begin(), op.end(), op.begin(), ::tolower); //convert op to lower case
         // check whether op is a valid operation name
         int check = checkValidOp(op);
@@ -538,8 +580,10 @@ int scanMain(){
         		ignoreSpaces(j, str_inst[i]);
         		// should be nothing after the colon and whitespaces
         		if(j == len_inst - 1 || str_inst[i][j]){
-        			cout << "Instruction " << i+1 <<": Not a valid label (label cannot be followed by any instruction).\n";
-        			return -1;
+        			if(checkValidDataLabel(temp_dl) == -1){
+        				cout << "Instruction " << i+1 <<": Not a valid label (label cannot be followed by any instruction).\n";
+        				return -1;
+        			}
         		}
            		// its a valid label, so must already be in the labels vector
         		op.clear(); // clear the string op
@@ -657,10 +701,35 @@ int scanMain(){
 				}
 				inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // rd not needed
 			}
-			// else if(str_inst[i][j] == '='){
-			// 	// ldr arm pseudo instruction
-			// 	j ++;
-			// }
+			else if(str_inst[i][j] == '='){
+				// ldr arm pseudo instruction
+				j ++;
+				op += "Pseudo";
+				string myDataLabel;
+				// cout << myDataLabel << "\n";
+				ignoreSpaces(j, str_inst[i]);
+				while(j < len_inst && str_inst[i][j] != ' '){
+					myDataLabel += str_inst[i][j];
+					j ++;
+				}
+				// cout << myDataLabel << "\n";
+				if(myDataLabel.length() == 0){
+					cout << "Instruction " << i+1 << ": Not a valid ldr psuedo instruction.(no label specified) \n";
+					return -1;
+				}
+				ignoreSpaces(j, str_inst[i]);
+				if(j == len_inst - 1 || str_inst[i][j]){
+					cout << "Instruction " << i+1 << ": Not a valid ldr psuedo instruction. \n";
+					return -1;
+				}
+				int dlIndex = checkValidDataLabel(myDataLabel);
+				if(dlIndex == -1){
+					cout << "Instruction " << i+1 << ": No such label exists.\n";
+					return -1;
+				}
+				// cout << dlIndex << "\n";
+				inst_vec.push_back(instructions(op, rd, 0, dlIndex, 0)); // rn, imm not needed
+			}
 			else{
 				cout << "Instruction " << i+1 << ": Not a valid "<< op << " instruction.\n";
 				return -1;

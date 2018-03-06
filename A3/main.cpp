@@ -29,10 +29,16 @@ defined in scan.h :
         string label_name;
         int addr;
     };
+    struct data_Label{
+        string label_name;
+        int addr;
+        int size;
+    };
     string supportedInst[];
     vector <instructions> inst_vec;
     int numSupported;
     vector <Label> labels;
+    vector <data_Label> data_labels;
     vector <string> str_inst;
     int getRegisterValue(int &j, string s);
     int getOperand2(int &j, string s, bool &imm);
@@ -52,6 +58,7 @@ defined in arm.h :
         void mul(int rd, int rn, int operand2);
         void mov(int rd, int operand2, bool i);
         void ldr(int rd, int rn, int offset);
+        void ldrPseudo(int rd, int operand2);
         void str(int rd, int rn, int offset);
         int getR_atIndex(int i);
         int getN();
@@ -69,6 +76,7 @@ defined in arm.h :
         void execute(instructions i);
         void display();
         void run(vector <instructions> inst_vec);
+        void allocate(vector<data_Label> data_labels);
     };
 */
 
@@ -77,14 +85,14 @@ int main(){
     // ofstream fout; // to write output to the file
     // fout.open("out.txt"); // specify the output file
 
-    int status = scanMain();
+    int status = scanMain(); // used to scan the input and create an instructions vector  
 
     if(status == -1){
         cout << "\nTerminating...";
     }
     else{
-        myArm.allocate(data_labels);
-        myArm.run(inst_vec);
+        myArm.allocate(data_labels); // to allocate memory to data labels 
+        myArm.run(inst_vec); // to run the instructions 
     } 
 
     // fout.close(); // to close the output file
