@@ -198,6 +198,7 @@ int checkValidLabel(string label){
 int scanLabels(){
 
     string lab; // for the label name
+	int valid_inst = 0;
 
     int tot_lines = str_inst.size(); // total lines of instructions/data/labels to parse
 	for(int i = 0; i < tot_lines; i++){
@@ -244,13 +245,14 @@ int scanLabels(){
         		}
                 Label temp;
                 temp.label_name = lab;
-                temp.addr = (i - labels.size())*4 + 1000; // this will be the actual instruction index(0-based) the label points to
+                temp.addr = (valid_inst)*4 + 1000; // this will be the actual instruction index(0-based) the label points to
         		labels.push_back(temp); // add the label to the vector labels
         		lab.clear(); // clear the string lab
         		continue ; // parse the next instruction
         	}
         }
 		else{
+			valid_inst++;
 			lab.clear(); // clear the string lab
 			continue;
         }

@@ -87,11 +87,11 @@ public:
 		int val;
 		if(i == false){
 			val = r[r1] - r[r2];
-			if(r[r1] > 0 && r[r2] < 0){
+			if(r[r1] >= 0 && r[r2] <= 0){
 				// no borrow is taken in this case
 				C = 0;
 			}
-			else if(r[r1] < 0 && r[r2] > 0){
+			else if(r[r1] <= 0 && r[r2] >= 0){
 				// borrow is taken
 				C = 1;
 			}
@@ -106,10 +106,10 @@ public:
 		}
 		else{
 			val = r[r1] - r2;
-			if(r[r1] > 0 && r2 < 0){
+			if(r[r1] >= 0 && r2 <= 0){
 				C = 0;
 			}
-			else if(r[r1] < 0 && r2 > 0){
+			else if(r[r1] <= 0 && r2 >= 0){
 				C = 1;
 			}
 			else if(r[r1] < r2){
@@ -321,10 +321,10 @@ public:
 				pointer ++; // if pointer = pc then increment pointer
 				r[15] += 4; // update PC
 			}
-			// if(Debug == 1){
-			// 	char c;
-			// 	scanf("%c",&c);
-			// }
+			if(Debug == 1){
+				char c;
+				scanf("%c",&c);
+			}
 		}
 	}
 };
