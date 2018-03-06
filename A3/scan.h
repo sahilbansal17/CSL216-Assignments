@@ -149,6 +149,11 @@ int getOperand2(int &j, string s, bool &imm){
     }
     else if(s[j++] == '#'){
         string num;
+        bool neg = 0;
+        if(s[j] == '-'){
+        	neg = 1;
+        	j ++;
+        }
         while(j <= s.length() - 1 && s[j] >= '0' && s[j] <= '9'){
             num += s[j];
             j ++;
@@ -160,6 +165,9 @@ int getOperand2(int &j, string s, bool &imm){
             return -1;
         }
         imm = true; // immediate operand
+        if(neg == 1){
+        	res = -1*res; // accepting neg no in operand2
+        }
     }
     else{
         return -1; //error handling
@@ -198,6 +206,9 @@ int scanLabels(){
 
         ignoreSpaces(j, str_inst[i]); // ignore spaces/tabs in the beginning 
 
+        if(j == len_inst){
+        	continue; // ignore blank lines 
+        }
         // get the label/operation name
         while(j < len_inst && str_inst[i][j] != ' ' && str_inst[i][j] != ':'){
             lab += str_inst[i][j];
@@ -284,6 +295,11 @@ int scanMain(){
         int j = 0, len_inst = str_inst[i].length();
 
         ignoreSpaces(j, str_inst[i]); // ignore spaces/tabs in the beginning 
+        
+        if(j == len_inst){
+        	continue; // ignore blank lines 
+        }
+
         // get the operation name
         while(j < len_inst && str_inst[i][j] != ' ' && str_inst[i][j] != ':'){
             op += str_inst[i][j];
