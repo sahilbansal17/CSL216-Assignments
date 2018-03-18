@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "statistics.h"
+#include "y.tab.h"
 using namespace std;
 
 class ARM{
@@ -374,6 +375,16 @@ public:
 		cout<<"\n";
 		st.display();
 	}
+//make a function for doing period-wise operation
+//use extern latency_obj as its has all the data of the file
+//file structure is defined in parser.y
+//call parser() to read all the data from the latency.txt and store it in the structure 
+// the function returns -1 if there is any syntax error in the file.
+//abort the execution if any syntax errors are found.
+
+//lex lex.l && yacc -d parser.y && g++ lex.yy.c y.tab.c -fpermissive -w -std=c++11
+//the above mentioned command is used to run the parser. Include it in the makefile.
+
 	void allocate(vector<data_Label> data_labels){
 		for(int i=0; i<data_labels.size(); i++){
 			dlAddress.push_back(startAddress);
