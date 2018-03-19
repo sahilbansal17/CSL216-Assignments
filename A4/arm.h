@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "statistics.h"
-#include "y.tab.h"
+#include "latency.h"
 using namespace std;
 
 class ARM{
@@ -384,6 +384,12 @@ public:
 
 //lex lex.l && yacc -d parser.y && g++ lex.yy.c y.tab.c -fpermissive -w -std=c++11
 //the above mentioned command is used to run the parser. Include it in the makefile.
+	void run2(){
+		parse();
+		for(int i=0;i<latency_obj.size();i++){
+        	cout<<latency_obj[i].command<<"--> "<<latency_obj[i].clock_cycle<<endl;
+    	}
+	}
 
 	void allocate(vector<data_Label> data_labels){
 		for(int i=0; i<data_labels.size(); i++){

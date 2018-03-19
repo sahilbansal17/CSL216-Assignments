@@ -93,7 +93,8 @@ int main(int argc, char * argv[]){
     }
     else{
         myArm.allocate(data_labels); // to allocate memory to data labels 
-        myArm.run(inst_vec); // to run the instructions 
+        // myArm.run(inst_vec); // to run the instructions
+        myArm.run2(); 
     } 
 
     // fout.close(); // to close the output file

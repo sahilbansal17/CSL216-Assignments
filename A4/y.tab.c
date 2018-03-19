@@ -70,22 +70,18 @@
     #include <fstream>
     #include <iostream>
     #include <string.h>
-    #include <vector>
     #include <algorithm>
     #include "y.tab.h"
+    #include "latency.h"
     using namespace std;
     void yyerror(char *);
     char* trim(char* input);
     extern "C" int yylex();
     extern "C" FILE *yyin;
-    int error=0;
-    struct latency{
-        char *command;
-        int clock_cycle;
-    };
     vector <latency> latency_obj;
+    int error=0;
 
-#line 89 "y.tab.c" /* yacc.c:339  */
+#line 85 "y.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -148,7 +144,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 152 "y.tab.c" /* yacc.c:358  */
+#line 148 "y.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -446,7 +442,7 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    26,    26,    27,    28,    29,    30,    32,    34
+       0,    22,    22,    23,    24,    25,    26,    28,    30
 };
 #endif
 
@@ -1215,18 +1211,18 @@ yyreduce:
   switch (yyn)
     {
         case 8:
-#line 35 "parser.y" /* yacc.c:1646  */
+#line 31 "parser.y" /* yacc.c:1646  */
     {
                 latency temp;
                 temp.command = trim((yyvsp[-3]));
                 temp.clock_cycle = (yyvsp[-1]);
                 latency_obj.push_back(temp);
             }
-#line 1226 "y.tab.c" /* yacc.c:1646  */
+#line 1222 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1230 "y.tab.c" /* yacc.c:1646  */
+#line 1226 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1454,24 +1450,20 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 42 "parser.y" /* yacc.c:1906  */
+#line 38 "parser.y" /* yacc.c:1906  */
 
 
-char* trim(char* input)
-{
+char* trim(char* input){
     char* output = input;
     int i = 0, j = 0;
         
-    while (input[i] != NULL)
-    {
-        if (input[i] != ' ')
-        {
+    while (input[i] != NULL){
+        if (input[i] != ' '){
             output[j] = input[i];
             j++;
             i++;
         }
-        else
-        {
+        else{
             i++;
         }
     }
@@ -1479,28 +1471,24 @@ char* trim(char* input)
     return output;	
 }
 
-void yyerror(char *s) {
+void yyerror(char *s){
     error=-1;
     extern int yylineno;
     fprintf(stderr, "Line Number%d:-%s\n",yylineno, s);
 }
-void printvector()
-{
-    for(int i=0;i<latency_obj.size();i++)
-    {
+void printvector(){
+    for(int i=0;i<latency_obj.size();i++){
         cout<<latency_obj[i].command<<"--> "<<latency_obj[i].clock_cycle<<endl;
     }
 }
-int main(void) {
+int parse(void){
    FILE *pt = fopen("latency.txt", "r" );
-    if(!pt)
-    {
+    if(!pt){
         cout << "No such file exists" << endl;
         return -1;
     }
     yyin = pt;
-    do
-    {
+    do{
         yyparse();
     }while (!feof(yyin));
     printvector();

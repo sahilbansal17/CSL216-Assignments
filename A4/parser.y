@@ -5,21 +5,16 @@
     #include <fstream>
     #include <iostream>
     #include <string.h>
-    #include <vector>
     #include <algorithm>
     #include "y.tab.h"
+    #include "latency.h"
     using namespace std;
     void yyerror(char *);
-    int parse(void);
     char* trim(char* input);
     extern "C" int yylex();
     extern "C" FILE *yyin;
-    int error=0;
-    struct latency{
-        char *command;
-        int clock_cycle;
-    };
     vector <latency> latency_obj;
+    int error=0;
 %}
 %token COMMAND EQUALS SEMICOLON NUM
 
