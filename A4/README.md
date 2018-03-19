@@ -1,3 +1,11 @@
+# Assignment 4 - ARM Simulator with Multicycle Instructions
+
+The instruction set simulator developed in Assignment 3 is enhances, to also incorporate delays. Assuming a file **'latency.txt'** will be given that indicates the information of how many clock cycles each instruction requires.
+
+The statistics about the clock cycle counts and average Instructions Per Cycle (IPC) for the input program will also be shown.
+
+[OPTIONAL: Implement the simulation of instruction and data cache memory, along with their delays.]
+
 ## Running the ARM Simulator :
 
 #### Normal execution mode (all commands at once)
@@ -48,7 +56,7 @@ For labels, the instruction must start from the next line.
 It is assumed that the size of data memory is 100 words (400 bytes) and start address is 1000.
 Memory can currently be only allocated at multiples of 4 (since an integer array is used to simulate the memory).
 
-Currently, comments are not supported in the input file. 
+Currently, comments are not supported in the input file.
 
 ### Test Cases
 Some test cases are provided in the **testCases** folder which have been extensively tested during the making of the simulator at each step.
