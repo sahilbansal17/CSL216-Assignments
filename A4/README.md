@@ -1,28 +1,28 @@
 # Assignment 4 - ARM Simulator with Multicycle Instructions
 
-The instruction set simulator developed in Assignment 3 is enhances, to also incorporate delays. Assuming a file **'latency.txt'** will be given that indicates the information of how many clock cycles each instruction requires.
-
-The statistics about the clock cycle counts and average Instructions Per Cycle (IPC) for the input program will also be shown.
-
-[OPTIONAL: Implement the simulation of instruction and data cache memory, along with their delays.]
+It enhances the instruction set simulator developed in Assignment 3, to also incorporate delays.
 
 ## Running the ARM Simulator :
 
-#### Normal execution mode (all commands at once)
+#### Normal execution mode (all instructions at once)
 `make execute input="input_file_name.extension"`
 
-eg. : `make execute input=in.s`
+eg. : `make execute input=testCases/test_A4_1.s`
 
 
-#### Debug mode (run commands line by line, hit Enter after each instruction)
+#### Debug mode (run instructions cycle by cycle, hit Enter after each cycle)
 `make debug input="input_file_name.extension"`
 
-eg. : `make debug input=in.s`
+eg. : `make debug input=testCases/test_A4_1.s`
 
 #### Clean (removes executable)
 `make clean`
 
 ## Assumptions and About the Simulator
+
+Assuming a file **'latency.txt'** will be given that indicates the information of how many clock cycles each instruction requires.
+
+The latency of all the supported instructions must be provided in it otherwise an error will be reported.
 
 The program supports the following instructions:
 - LDR/STR
@@ -60,3 +60,11 @@ Currently, comments are not supported in the input file.
 
 ### Test Cases
 Some test cases are provided in the **testCases** folder which have been extensively tested during the making of the simulator at each step.
+
+1. `testCases/test_A4_1.s` is for verifying that all the kinds of load instructions are working properly.
+
+2. `testCases/fact.s` is for verifying that function calls `bl` work properly.
+
+3. `testCases/sum_1_to_n.s` is the code given in **Assignment 1** without comments and modified to fit within memory limits.
+
+4. Other test cases are for verifying all other basic instructions.

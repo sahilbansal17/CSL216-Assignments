@@ -536,7 +536,10 @@ int scanMain(string file_name){
 
 	ifstream fin; // to read input from the file
     fin.open(file_name); // specify the input file
-
+	if(!fin){
+		cout << "\nError, no such input file.\n";
+		return -1;
+	}
     // till not reached the end of file
     while(!fin.eof()){
         getline(fin, inst); // take input line-by-line

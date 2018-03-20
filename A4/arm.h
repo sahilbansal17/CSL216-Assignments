@@ -397,7 +397,7 @@ public:
 			// except ldr_pseudo, all kinds of ldr will will stored as "ldr" in latency_obj
 			s = "ldr";
 		}
-		else if(s[0] == 's' && s[0] == 't' && s[0] == 'r'){
+		else if(s[0] == 's' && s[1] == 't' && s[2] == 'r'){
 			// all kinds of str will be stored as "str" in latency_obj
 			s = "str";
 		}
@@ -455,7 +455,7 @@ public:
 				scanf("%c",&c);
 			}
 			else{
-				// normal mode of execution 
+				// normal mode of execution
 				cout << "Cycle " << cycle_no << "-" << cycle_no + inst_cycle << "\n";
 				cycle_no += inst_cycle;
 				execute(inst_vec[pointer]); // execute the instruction
@@ -479,8 +479,8 @@ public:
 
 		}
 		cout << "\n";
-		st.setInstCount(inst_count);
-		st.setCycleCount(cycle_no);
+		st.setInstCount(inst_count - 1); // since it is incremented even after executing the last inst
+		st.setCycleCount(cycle_no - 1); // since it is always one more than the no of cycles executed 
 		st.display();
 	}
 
