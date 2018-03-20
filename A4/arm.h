@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include "statistics.h"
-#include "latency.h"
 using namespace std;
 
 class ARM{
@@ -325,7 +323,7 @@ public:
 		}
 	}
 
-	// display the contents of the register file and NZCV flags
+	// display the contents of the register file and NZCV flags, also the memory
 	void display(instructions i, int count){
 		cout << count << ". " << i.getOp() << "\n";
 		cout << ".Registers -";
@@ -344,9 +342,23 @@ public:
 		cout << "|\n\n";
 	}
 
-	void run(vector <instructions> inst_vec){
+	// to allocate memory to the data lables and push the address to dlAddress
+	void allocate(vector<data_Label> data_labels){
+		for(int i = 0; i < data_labels.size(); i++){
+			dlAddress.push_back(startAddress);
+			if(data_labels[i].size % 4 == 0){
+				startAddress += data_labels[i].size;
+			}
+			else{
+				startAddress += ((data_labels[i].size)/4)*4 + 4; // ceil value
+			}
+		}
+	}
+
+	// to run the single cycle version of the ARM simulator
+	void runSingleCycle(vector <instructions> inst_vec){
 		int count = 1;
-		int pointer=0;
+		int pointer = 0;
 		while(pointer != inst_vec.size()){
 			int old, newPC;
 			old = r[15];
@@ -356,7 +368,7 @@ public:
 				newPC = r[15]; // if PC has changed then store new value and
 				r[15] = old; // old value back to PC for display
 			}
-			display(inst_vec[pointer], count ++); // display the contents of register
+			// display(inst_vec[pointer], count ++); // display the contents of register
 
 			r[15] = newPC;
 			if(r[15] != old){
@@ -375,26 +387,16 @@ public:
 		cout<<"\n";
 		st.display();
 	}
-//make a function for doing period-wise operation
-//use extern latency_obj as its has all the data of the file
-//file structure is defined in parser.y
-//call parser() to read all the data from the latency.txt and store it in the structure 
-// the function returns -1 if there is any syntax error in the file.
-//abort the execution if any syntax errors are found.
 
-//lex lex.l && yacc -d parser.y && g++ lex.yy.c y.tab.c -fpermissive -w -std=c++11
-//the above mentioned command is used to run the parser. Include it in the makefile.
-	void run2(){
-		parse();
-		for(int i=0;i<latency_obj.size();i++){
-        	cout<<latency_obj[i].command<<"--> "<<latency_obj[i].clock_cycle<<endl;
-    	}
+	// to run the Multi Cycle version of the ARM Simulator
+	void runMultiCycle(vector <instructions> inst_vec){
+
 	}
 
-	void allocate(vector<data_Label> data_labels){
-		for(int i=0; i<data_labels.size(); i++){
-			dlAddress.push_back(startAddress);
-			startAddress += ((data_labels[i].size)/4)*4 + 4; // ceil value
-		}
+	// to show the latency associated with each instruction
+	void showCycleData(){
+		for(int i = 0; i < latency_obj.size(); i++){
+        	cout << latency_obj[i].command << "--> " << latency_obj[i].clock_cycle << endl;
+    	}
 	}
 };

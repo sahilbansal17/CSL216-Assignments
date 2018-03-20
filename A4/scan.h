@@ -1,3 +1,4 @@
+#include "latency.h"
 // This file contains all code relevant to parsing of the instructions and also the class named instructions,
 // structure named labels for storing label names and their addresses
 using namespace std;
@@ -513,7 +514,7 @@ int scanLabels(){
 
     }
     int num_labels = labels.size() + data_labels.size(); // no of labels
-    cout << "Number of labels: " << num_labels << "\n";
+    // cout << "Number of labels: " << num_labels << "\n";
 
     return 1;
 
@@ -739,9 +740,23 @@ int scanMain(string file_name){
         imm = false; // set immediate operand to be false
     }
     int num_inst = inst_vec.size(); // no of instructions
-    cout << "Number of instructions: " << num_inst << "\n";
+    // cout << "Number of instructions: " << num_inst << "\n";
     // int num_labels = labels.size(); // no of labels
     // cout << "Number of labels: " << num_labels << "\n";
 
     return 1;
+}
+
+int scanLatency(){
+	// parse to get the latency_obj vector filled with instructions along with their latency values
+	int status = parse();
+	if(status == -1){
+		return -1;
+	}
+	/*
+	for(int i = 0; i < latency_obj.size(); i++){
+		cout << latency_obj[i].command << "--> " << latency_obj[i].clock_cycle << endl;
+	}
+	*/
+	return 1;
 }

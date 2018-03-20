@@ -1,40 +1,40 @@
 // This class handles statistics of the instructions.
 class statistics{
     private:
-    struct List{        // List contain the name of instruction and its frequency
-        string func;
+    struct Counter{        // Counter contain the name of instruction and its frequency
+        string inst;
         int count;
     };
-    vector <List> list;
+    vector <Counter> freqCounter;
 
     public:
     // finds the instruction s in the list
     int find(string s){
-        for(int i=0;i<list.size();i++){
-            if(list[i].func == s){
+        for(int i = 0; i < freqCounter.size(); i++){
+            if(freqCounter[i].inst == s){
                 return i;
             }
         }
         return -1;
     }
-    //push the instruction if it never called before
+    // push the instruction if it appeared for the first time
     void counter(string op){
         int temp = find(op);
-        if ( temp == -1 ){  // if instruction op is never executed before.
-            List val;
-            val.func=op;
-            val.count=1;       
-            list.push_back(val);
+        if (temp == -1){  // if instruction op is never executed before.
+            Counter temp;
+            temp.inst = op;
+            temp.count = 1;
+            freqCounter.push_back(temp);
         }
         else{
-            list[temp].count++; // increase the count of the instruction if called before.
-        }        
+            freqCounter[temp].count ++; // otherwise increase the count of the instruction
+        }
     }
-    //display the list of instructions called along with its frequency
+    // display the list of instructions called along with their frequency
     void display()
     {
-        for(int i=0;i<list.size();i++){
-            cout<<"Instruction "<<list[i].func<<" is called "<<list[i].count<<" number of times\n";
+        for(int i = 0; i < freqCounter.size(); i++){
+            cout << "Instruction " << freqCounter[i].inst << " is called " << freqCounter[i].count << " number of times\n";
         }
     }
 };
