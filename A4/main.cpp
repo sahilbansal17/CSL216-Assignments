@@ -11,10 +11,11 @@ ARM myArm;
 /*
 defined in scan.h :
     class instructions{
-    private: string op; int rd, rn, operand2; bool imm;
+    private: string op, fullInst; int rd, rn, operand2; bool imm;
     public:
         instructions();
-        instructions(string _op, int _rd, int _rn, int _op2, bool _imm);
+        instructions(string inst, string _op, int _rd, int _rn, int _op2, bool _imm);
+        string getFullInst();
         string getOp();
         int getRd();
         int getRn();
@@ -81,7 +82,9 @@ defined in arm.h :
         void display();
         void allocate(vector<data_Label> data_labels);
         void runSingleCycle(vector <instructions> inst_vec);
+        int getLatency(string s);
         void runMultiCycle(vector <instructions> inst_vec);
+        void showLatencyData();
     };
 
 defined in latency.h :
@@ -124,7 +127,7 @@ int main(int argc, char * argv[]){
         cout << "Latency text file has errors. No further execution possible.\n";
         return 0;
     }
-    myArm.showCycleData(); // for testing purpose
+    myArm.showLatencyData(); // shows the latency associated with each instruction 
 
     // now, if latency.txt has no errors, scan the input containing assembly code
     string file_name = argv[1];
@@ -134,7 +137,7 @@ int main(int argc, char * argv[]){
     }
     else{
         myArm.allocate(data_labels); // to allocate memory to data labels
-        // myArm.runSingleCycle(inst_vec); // to run the instructions
+        myArm.runMultiCycle(inst_vec); // to run the instructions
     }
 
     // fout.close(); // to close the output file

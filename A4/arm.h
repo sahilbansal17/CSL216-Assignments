@@ -266,10 +266,10 @@ public:
 			offset(rn, operand2); // update the load address later
 			st.counter("ldr");
 		}
-		else if(op == "ldrPseudo"){
+		else if(op == "ldr_pseudo"){
 			// cout << "Called";
 			ldrPseudo(rd, operand2); // Pseudo ldr
-			st.counter("ldr");
+			st.counter("ldr_pseudo");
 		}
 		else if(op == "str"){
 			str(rd, rn, 0); // normal str with no offset
@@ -325,7 +325,7 @@ public:
 
 	// display the contents of the register file and NZCV flags, also the memory
 	void display(instructions i, int count){
-		cout << count << ". " << i.getOp() << "\n";
+		cout << "Inst No.: " << count << " => " << i.getFullInst() << "\n";
 		cout << ".Registers -";
 		for(int j = 0; j < 16; j++){
 			printf("|r%d=%2d",j,r[j]);
@@ -333,13 +333,16 @@ public:
 		cout << "|\n";
 		cout << ".Flags -";
 		cout << " N :" << getN() << "| " << "Z :" << getZ() << "| " << "C :" << getC() << "|\n";
-		cout << ".Memory Filled -";
+		cout << ".Memory Filled - ";
+		int memoryNull = 1;
 		for(int j = 0; j < 100 ; j++){
 			if(memory[j] != 0){
+				memoryNull = 0;
 				printf("|(%d)=%2d",j*4+1000,memory[j]);
 			}
 		}
-		cout << "|\n\n";
+		if(!memoryNull) cout << "|\n\n";
+		else cout << "NIL \n\n";
 	}
 
 	// to allocate memory to the data lables and push the address to dlAddress
@@ -368,7 +371,7 @@ public:
 				newPC = r[15]; // if PC has changed then store new value and
 				r[15] = old; // old value back to PC for display
 			}
-			// display(inst_vec[pointer], count ++); // display the contents of register
+			display(inst_vec[pointer], count ++); // display the contents of register
 
 			r[15] = newPC;
 			if(r[15] != old){
@@ -388,15 +391,80 @@ public:
 		st.display();
 	}
 
+	int getLatency(string s){
+		// return 1; // for testing purpose
+		if(s != "ldr_pseudo" && s[0] == 'l' && s[1] == 'd' && s[2] == 'r'){
+			// except ldr_pseudo, all kinds of ldr will will stored as "ldr" in latency_obj
+			s = "ldr";
+		}
+		else if(s[0] == 's' && s[0] == 't' && s[0] == 'r'){
+			// all kinds of str will be stored as "str" in latency_obj
+			s = "str";
+		}
+		for(int i = 0 ; i < latency_obj.size(); i ++){
+			string latency_inst(latency_obj[i].command);
+			if(s == latency_inst){
+				return latency_obj[i].clock_cycle;
+			}
+		}
+		cout << "Error: No latency defined for instruction: " << s << "\n";
+		return -1;
+	}
+
 	// to run the Multi Cycle version of the ARM Simulator
 	void runMultiCycle(vector <instructions> inst_vec){
+		int cycle_no = 0, inst_cycle, old, newPC, inst_count = 1;
+		int pointer = 0;
+		while(pointer != inst_vec.size()){
+			// till all the instructions are not executed
+			// get the no of clock cycles required to execute this instruction
+			string current_inst = inst_vec[pointer].getOp();
+			inst_cycle = getLatency(current_inst);
+			if(inst_cycle == -1){
+				return ; // since no latency defined for this kind of instruction
+			}
+			old = r[15];
+			newPC = r[15];
 
+			// execute the instruction
+			execute(inst_vec[pointer]);
+
+			// handle PC for display
+			if(r[15] != old){
+				newPC = r[15]; // if PC has changed then store new value and
+				r[15] = old; // old value back to PC for display
+			}
+			// displayMultiCycle(inst_vec[pointer], cycle_no, cycle_no += inst_cycle); // display the contents of register
+			cout << "Cycle " << cycle_no << "-" << cycle_no + inst_cycle << "\n";
+			cycle_no += inst_cycle;
+
+			display(inst_vec[pointer], inst_count++);
+
+			// handle PC and pointer to get next instruction address
+			r[15] = newPC;
+			if(r[15] != old){
+				// check whether pc is changed after the execution of instruction
+				pointer = (r[15] - 1000)/4; // update the pointer
+			}
+			else{
+				pointer ++; // if pointer = pc then increment pointer
+				r[15] += 4; // update PC
+			}
+
+			// expect user to enter \n in debug mode
+			if(Debug == 1){
+				char c;
+				scanf("%c",&c);
+			}
+		}
 	}
 
 	// to show the latency associated with each instruction
-	void showCycleData(){
+	void showLatencyData(){
+		cout << "\n\nInstructions with their latencies: \n";
 		for(int i = 0; i < latency_obj.size(); i++){
-        	cout << latency_obj[i].command << "--> " << latency_obj[i].clock_cycle << endl;
+        	cout << latency_obj[i].command << " --> " << latency_obj[i].clock_cycle << endl;
     	}
+		cout << "\n\n";
 	}
 };
