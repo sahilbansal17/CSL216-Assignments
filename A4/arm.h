@@ -413,8 +413,10 @@ public:
 
 	// to run the Multi Cycle version of the ARM Simulator
 	void runMultiCycle(vector <instructions> inst_vec){
-		int cycle_no = 0, inst_cycle, old, newPC, inst_count = 1;
+		long int cycle_no = 1, inst_count = 1;
+		int inst_cycle, old, newPC;
 		int pointer = 0;
+		char c; // for debug mode
 		while(pointer != inst_vec.size()){
 			// till all the instructions are not executed
 			// get the no of clock cycles required to execute this instruction
@@ -426,20 +428,44 @@ public:
 			old = r[15];
 			newPC = r[15];
 
-			// execute the instruction
-			execute(inst_vec[pointer]);
+			// expect user to enter \n in debug mode, executed cycle by cycle
+			if(Debug == 1){
+				cout << "Cycle " << cycle_no << ":\n";
+				cout << "Instruction has started. Before start: \n";
+				display(inst_vec[pointer], inst_count);
+				scanf("%c",&c);
+				while(inst_cycle--){
+					cycle_no ++;
+					if(inst_cycle){
+						cout << "Cycle " << cycle_no << ":\n";
+						cout << "Instruction in progress. " << inst_cycle << " more cycles to go.\n";
+						scanf("%c",&c);
+					}
+				}
+				cout << "Cycle " << cycle_no << ":\n";
+				cout << "Instruction has ended. Current status: \n";
 
-			// handle PC for display
-			if(r[15] != old){
-				newPC = r[15]; // if PC has changed then store new value and
-				r[15] = old; // old value back to PC for display
+				execute(inst_vec[pointer]); // execute the instruction
+				// handle PC for display
+				if(r[15] != old){
+					newPC = r[15]; // if PC has changed then store new value and
+					r[15] = old; // old value back to PC for display
+				}
+				display(inst_vec[pointer], inst_count ++);
+				scanf("%c",&c);
 			}
-			// displayMultiCycle(inst_vec[pointer], cycle_no, cycle_no += inst_cycle); // display the contents of register
-			cout << "Cycle " << cycle_no << "-" << cycle_no + inst_cycle << "\n";
-			cycle_no += inst_cycle;
-
-			display(inst_vec[pointer], inst_count++);
-
+			else{
+				// normal mode of execution 
+				cout << "Cycle " << cycle_no << "-" << cycle_no + inst_cycle << "\n";
+				cycle_no += inst_cycle;
+				execute(inst_vec[pointer]); // execute the instruction
+				// handle PC for display
+				if(r[15] != old){
+					newPC = r[15]; // if PC has changed then store new value and
+					r[15] = old; // old value back to PC for display
+				}
+				display(inst_vec[pointer], inst_count++);
+			}
 			// handle PC and pointer to get next instruction address
 			r[15] = newPC;
 			if(r[15] != old){
@@ -451,12 +477,11 @@ public:
 				r[15] += 4; // update PC
 			}
 
-			// expect user to enter \n in debug mode
-			if(Debug == 1){
-				char c;
-				scanf("%c",&c);
-			}
 		}
+		cout << "\n";
+		st.setInstCount(inst_count);
+		st.setCycleCount(cycle_no);
+		st.display();
 	}
 
 	// to show the latency associated with each instruction

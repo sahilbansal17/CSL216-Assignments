@@ -11,7 +11,7 @@ execute:
 
 debug:
 	lex scanLatency.l && yacc -d parseLatency.y
-	$(CXX) main.cpp $(CFLAGS) -o $(MAIN) -DDebug=1
+	$(CXX) main.cpp lex.yy.c y.tab.c $(CFLAGS) -o $(MAIN) -DDebug=1
 	./$(MAIN) $(input)
 
 clean:
