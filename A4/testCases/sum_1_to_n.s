@@ -1,4 +1,4 @@
-	mov r1, #1000
+	mov r1, #100
 	mov r2, #1
 	ldr r3, =AA
 
@@ -10,7 +10,7 @@ StoreIntegers:
 	cmp r1, #0
 	bne StoreIntegers
 
-	mov r1, #1000
+	mov r1, #100
 	mov r4, #0
 	ldr r3, =AA
 
@@ -24,5 +24,5 @@ LoadAddIntegers:
 
 	b exit
 
-AA:	.space 4000
+AA:	.space 400
 exit:

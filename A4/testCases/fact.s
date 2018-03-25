@@ -11,7 +11,8 @@ BGE L1
 MOV r0, #1
 ADD SP, SP, #8 
 MOV pc, lr
-L1 : SUB r0, r0, #1
+L1:
+SUB r0, r0, #1
 BL fact
 MOV r12, r0 
 LDR r0, [SP, #0]

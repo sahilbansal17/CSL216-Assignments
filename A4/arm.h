@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "statistics.h"
 using namespace std;
 
@@ -267,10 +266,10 @@ public:
 			offset(rn, operand2); // update the load address later
 			st.counter("ldr");
 		}
-		else if(op == "ldrPseudo"){
+		else if(op == "ldr_pseudo"){
 			// cout << "Called";
 			ldrPseudo(rd, operand2); // Pseudo ldr
-			st.counter("ldr");
+			st.counter("ldr_pseudo");
 		}
 		else if(op == "str"){
 			str(rd, rn, 0); // normal str with no offset
@@ -324,9 +323,9 @@ public:
 		}
 	}
 
-	// display the contents of the register file and NZCV flags
+	// display the contents of the register file and NZCV flags, also the memory
 	void display(instructions i, int count){
-		cout << count << ". " << i.getOp() << "\n";
+		cout << "Inst No.: " << count << " => " << i.getFullInst() << "\n";
 		cout << ".Registers -";
 		for(int j = 0; j < 16; j++){
 			printf("|r%d=%2d",j,r[j]);
@@ -334,18 +333,35 @@ public:
 		cout << "|\n";
 		cout << ".Flags -";
 		cout << " N :" << getN() << "| " << "Z :" << getZ() << "| " << "C :" << getC() << "|\n";
-		cout << ".Memory Filled -";
+		cout << ".Memory Filled - ";
+		int memoryNull = 1;
 		for(int j = 0; j < 100 ; j++){
 			if(memory[j] != 0){
+				memoryNull = 0;
 				printf("|(%d)=%2d",j*4+1000,memory[j]);
 			}
 		}
-		cout << "|\n\n";
+		if(!memoryNull) cout << "|\n\n";
+		else cout << "NIL \n\n";
 	}
 
-	void run(vector <instructions> inst_vec){
+	// to allocate memory to the data lables and push the address to dlAddress
+	void allocate(vector<data_Label> data_labels){
+		for(int i = 0; i < data_labels.size(); i++){
+			dlAddress.push_back(startAddress);
+			if(data_labels[i].size % 4 == 0){
+				startAddress += data_labels[i].size;
+			}
+			else{
+				startAddress += ((data_labels[i].size)/4)*4 + 4; // ceil value
+			}
+		}
+	}
+
+	// to run the single cycle version of the ARM simulator
+	void runSingleCycle(vector <instructions> inst_vec){
 		int count = 1;
-		int pointer=0;
+		int pointer = 0;
 		while(pointer != inst_vec.size()){
 			int old, newPC;
 			old = r[15];
@@ -374,10 +390,106 @@ public:
 		cout<<"\n";
 		st.display();
 	}
-	void allocate(vector<data_Label> data_labels){
-		for(int i=0; i<data_labels.size(); i++){
-			dlAddress.push_back(startAddress);
-			startAddress += ((data_labels[i].size)/4)*4 + 4; // ceil value
+
+	int getLatency(string s){
+		// return 1; // for testing purpose
+		if(s != "ldr_pseudo" && s[0] == 'l' && s[1] == 'd' && s[2] == 'r'){
+			// except ldr_pseudo, all kinds of ldr will will stored as "ldr" in latency_obj
+			s = "ldr";
 		}
+		else if(s[0] == 's' && s[1] == 't' && s[2] == 'r'){
+			// all kinds of str will be stored as "str" in latency_obj
+			s = "str";
+		}
+		for(int i = 0 ; i < latency_obj.size(); i ++){
+			string latency_inst(latency_obj[i].command);
+			if(s == latency_inst){
+				return latency_obj[i].clock_cycle;
+			}
+		}
+		cout << "Error: No latency defined for instruction: " << s << "\n";
+		return -1;
+	}
+
+	// to run the Multi Cycle version of the ARM Simulator
+	void runMultiCycle(vector <instructions> inst_vec){
+		long int cycle_no = 1, inst_count = 1;
+		int inst_cycle, old, newPC;
+		int pointer = 0;
+		char c; // for debug mode
+		while(pointer != inst_vec.size()){
+			// till all the instructions are not executed
+			// get the no of clock cycles required to execute this instruction
+			string current_inst = inst_vec[pointer].getOp();
+			inst_cycle = getLatency(current_inst);
+			if(inst_cycle == -1){
+				return ; // since no latency defined for this kind of instruction
+			}
+			old = r[15];
+			newPC = r[15];
+
+			// expect user to enter \n in debug mode, executed cycle by cycle
+			if(Debug == 1){
+				cout << "Cycle " << cycle_no << ":\n";
+				cout << "Instruction has started. Before start: \n";
+				display(inst_vec[pointer], inst_count);
+				scanf("%c",&c);
+				while(inst_cycle--){
+					cycle_no ++;
+					if(inst_cycle){
+						cout << "Cycle " << cycle_no << ":\n";
+						cout << "Instruction in progress. " << inst_cycle << " more cycles to go.\n";
+						scanf("%c",&c);
+					}
+				}
+				cout << "Cycle " << cycle_no << ":\n";
+				cout << "Instruction has ended. Current status: \n";
+
+				execute(inst_vec[pointer]); // execute the instruction
+				// handle PC for display
+				if(r[15] != old){
+					newPC = r[15]; // if PC has changed then store new value and
+					r[15] = old; // old value back to PC for display
+				}
+				display(inst_vec[pointer], inst_count ++);
+				scanf("%c",&c);
+			}
+			else{
+				// normal mode of execution
+				cout << "Cycle " << cycle_no << "-" << cycle_no + inst_cycle << "\n";
+				cycle_no += inst_cycle;
+				execute(inst_vec[pointer]); // execute the instruction
+				// handle PC for display
+				if(r[15] != old){
+					newPC = r[15]; // if PC has changed then store new value and
+					r[15] = old; // old value back to PC for display
+				}
+				display(inst_vec[pointer], inst_count++);
+			}
+			// handle PC and pointer to get next instruction address
+			r[15] = newPC;
+			if(r[15] != old){
+				// check whether pc is changed after the execution of instruction
+				pointer = (r[15] - 1000)/4; // update the pointer
+			}
+			else{
+				pointer ++; // if pointer = pc then increment pointer
+				r[15] += 4; // update PC
+			}
+
+		}
+		cout << "\n";
+		st.setInstCount(inst_count - 1); // since it is incremented even after executing the last inst
+		st.setCycleCount(cycle_no - 1); // since it is always one more than the no of cycles executed 
+		st.display();
+	}
+
+	// to show the latency associated with each instruction
+	void showLatencyData(){
+		cout << "\n\nInstructions with their latencies: \n";
+		for(int i = 0; i < latency_obj.size(); i++){
+        	cout << latency_obj[i].command << " --> " << latency_obj[i].clock_cycle << endl;
+    	}
+		cout << "\n\n";
 	}
 };

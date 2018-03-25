@@ -1,3 +1,4 @@
+#include "latency.h"
 // This file contains all code relevant to parsing of the instructions and also the class named instructions,
 // structure named labels for storing label names and their addresses
 using namespace std;
@@ -5,7 +6,7 @@ using namespace std;
 class instructions{
 
 private:
-	string op; // operation name
+	string op, fullInst; // operation name
 	int rd, rn, operand2; // the main 3 operands for any kind of instrution
 	bool imm; // whether immediate operand or not
    	// operand2 will only act as label for branch instructions, label address (int) will be passed in it
@@ -13,7 +14,8 @@ public:
 	instructions(){
 		; // default constructor
 	}
-	instructions(string _op, int _rd, int _rn, int _op2, bool _imm){
+	instructions(string inst, string _op, int _rd, int _rn, int _op2, bool _imm){
+		fullInst = inst;
 		op = _op ;
 		rd = _rd ;
 		rn = _rn ;
@@ -21,6 +23,9 @@ public:
 		imm = _imm ;
 	}
 	// getter functions
+	string getFullInst(){
+		return fullInst;
+	}
 	string getOp(){
 		return op;
 	}
@@ -513,7 +518,7 @@ int scanLabels(){
 
     }
     int num_labels = labels.size() + data_labels.size(); // no of labels
-    cout << "Number of labels: " << num_labels << "\n";
+    // cout << "Number of labels: " << num_labels << "\n";
 
     return 1;
 
@@ -531,7 +536,10 @@ int scanMain(string file_name){
 
 	ifstream fin; // to read input from the file
     fin.open(file_name); // specify the input file
-
+	if(!fin){
+		cout << "\nError, no such input file.\n";
+		return -1;
+	}
     // till not reached the end of file
     while(!fin.eof()){
         getline(fin, inst); // take input line-by-line
@@ -603,7 +611,7 @@ int scanMain(string file_name){
 			int label_addr = checkValidLabel(label_name);
 			if(label_addr != -1){
 				operand2 = label_addr;
-                inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // push to the instructions class vector
+                inst_vec.push_back(instructions(str_inst[i], op, rd, rn, operand2, imm)); // push to the instructions class vector
                 label_name.clear(); // clear the label name for further use
                 op.clear(); // clear the string op for next inst
 				continue; // move to next instruction
@@ -647,7 +655,7 @@ int scanMain(string file_name){
 	        		return -1;
 	        	}
 	        }
-	        inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // push to the instructions class vector
+	        inst_vec.push_back(instructions(str_inst[i], op, rd, rn, operand2, imm)); // push to the instructions class vector
 	    }
     	else if(op == "cmp" || op == "mov" || op == "cmn"){
 			rn = getRegisterValue(j, str_inst[i]);
@@ -660,7 +668,7 @@ int scanMain(string file_name){
 				cout << "Instruction " << i+1 << ": Error in operand2\n";
 	            return -1;
 			}
-			inst_vec.push_back(instructions(op, 0, rn, operand2, imm)); // rd not needed
+			inst_vec.push_back(instructions(str_inst[i], op, 0, rn, operand2, imm)); // rd not needed
 		}
 		else if(op == "str" || op == "ldr"){
 			// get rd
@@ -699,12 +707,12 @@ int scanMain(string file_name){
 					op += "Pre"; imm = 1;
 					// cout << op << " " << rd << " " << rn << " " << operand2 << "\n";
 				}
-				inst_vec.push_back(instructions(op, rd, rn, operand2, imm)); // rd not needed
+				inst_vec.push_back(instructions(str_inst[i], op, rd, rn, operand2, imm)); // rd not needed
 			}
 			else if(str_inst[i][j] == '='){
 				// ldr arm pseudo instruction
 				j ++;
-				op += "Pseudo";
+				op += "_pseudo";
 				string myDataLabel;
 				// cout << myDataLabel << "\n";
 				ignoreSpaces(j, str_inst[i]);
@@ -714,12 +722,12 @@ int scanMain(string file_name){
 				}
 				// cout << myDataLabel << "\n";
 				if(myDataLabel.length() == 0){
-					cout << "Instruction " << i+1 << ": Not a valid ldr psuedo instruction.(no label specified) \n";
+					cout << "Instruction " << i+1 << ": Not a valid ldr pseudo instruction.(no label specified) \n";
 					return -1;
 				}
 				ignoreSpaces(j, str_inst[i]);
 				if(j == len_inst - 1 || str_inst[i][j]){
-					cout << "Instruction " << i+1 << ": Not a valid ldr psuedo instruction. \n";
+					cout << "Instruction " << i+1 << ": Not a valid ldr pseudo instruction. \n";
 					return -1;
 				}
 				int dlIndex = checkValidDataLabel(myDataLabel);
@@ -728,7 +736,7 @@ int scanMain(string file_name){
 					return -1;
 				}
 				// cout << dlIndex << "\n";
-				inst_vec.push_back(instructions(op, rd, 0, dlIndex, 0)); // rn, imm not needed
+				inst_vec.push_back(instructions(str_inst[i], op, rd, 0, dlIndex, 0)); // rn, imm not needed
 			}
 			else{
 				cout << "Instruction " << i+1 << ": Not a valid "<< op << " instruction.\n";
@@ -739,9 +747,23 @@ int scanMain(string file_name){
         imm = false; // set immediate operand to be false
     }
     int num_inst = inst_vec.size(); // no of instructions
-    cout << "Number of instructions: " << num_inst << "\n";
+    // cout << "Number of instructions: " << num_inst << "\n";
     // int num_labels = labels.size(); // no of labels
     // cout << "Number of labels: " << num_labels << "\n";
 
     return 1;
+}
+
+int scanLatency(){
+	// parse to get the latency_obj vector filled with instructions along with their latency values
+	int status = parse();
+	if(status == -1){
+		return -1;
+	}
+	/*
+	for(int i = 0; i < latency_obj.size(); i++){
+		cout << latency_obj[i].command << "--> " << latency_obj[i].clock_cycle << endl;
+	}
+	*/
+	return 1;
 }

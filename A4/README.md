@@ -1,20 +1,28 @@
+# Assignment 4 - ARM Simulator with Multicycle Instructions
+
+It enhances the instruction set simulator developed in Assignment 3, to also incorporate delays.
+
 ## Running the ARM Simulator :
 
-#### Normal execution mode (all commands at once)
+#### Normal execution mode (all instructions at once)
 `make execute input="input_file_name.extension"`
 
-eg. : `make execute input=in.s`
+eg. : `make execute input=testCases/test_A4_1.s`
 
 
-#### Debug mode (run commands line by line, hit Enter after each instruction)
+#### Debug mode (run instructions cycle by cycle, hit Enter after each cycle)
 `make debug input="input_file_name.extension"`
 
-eg. : `make debug input=in.s`
+eg. : `make debug input=testCases/test_A4_1.s`
 
 #### Clean (removes executable)
 `make clean`
 
 ## Assumptions and About the Simulator
+
+Assuming a file **'latency.txt'** will be given that indicates the information of how many clock cycles each instruction requires.
+
+The latency of all the supported instructions must be provided in it otherwise an error will be reported.
 
 The program supports the following instructions:
 - LDR/STR
@@ -48,7 +56,15 @@ For labels, the instruction must start from the next line.
 It is assumed that the size of data memory is 100 words (400 bytes) and start address is 1000.
 Memory can currently be only allocated at multiples of 4 (since an integer array is used to simulate the memory).
 
-Currently, comments are not supported in the input file. 
+Currently, comments are not supported in the input file.
 
 ### Test Cases
 Some test cases are provided in the **testCases** folder which have been extensively tested during the making of the simulator at each step.
+
+1. `testCases/test_A4_1.s` is for verifying that all the kinds of load instructions are working properly.
+
+2. `testCases/fact.s` is for verifying that function calls `bl` work properly.
+
+3. `testCases/sum_1_to_n.s` is the code given in **Assignment 1** without comments and modified to fit within memory limits.
+
+4. Other test cases are for verifying all other basic instructions.
