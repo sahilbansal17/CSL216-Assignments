@@ -1,6 +1,4 @@
-mov r1, #10
-mov r0, #0
-loop:
-add r0, r0, #1
-cmp r0, r1
-bne loop
+mov r0, #50
+ldr r3, =AA
+str r0, [r3]
+AA: .space 4
