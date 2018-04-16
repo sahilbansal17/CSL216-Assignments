@@ -1,60 +1,51 @@
-#include "latency.h"
+#include "scan.h"
 // This file contains all code relevant to parsing of the instructions and also the class named instructions,
 // structure named labels for storing label names and their addresses
 using namespace std;
 
-class instructions{
-
-private:
-	string op, fullInst; // operation name
-	int rd, rn, operand2; // the main 3 operands for any kind of instrution
-	bool imm; // whether immediate operand or not
-   	// operand2 will only act as label for branch instructions, label address (int) will be passed in it
-public:
-	instructions(){
-		; // default constructor
-	}
-	instructions(string inst, string _op, int _rd, int _rn, int _op2, bool _imm){
-		fullInst = inst;
-		op = _op ;
-		rd = _rd ;
-		rn = _rn ;
-		operand2 = _op2 ;
-		imm = _imm ;
-	}
-	// getter functions
-	string getFullInst(){
-		return fullInst;
-	}
-	string getOp(){
-		return op;
-	}
-	int getRd(){
-		return rd;
-	}
-	int getRn(){
-		return rn;
-	}
-	int getOp2(){
-		return operand2;
-	}
-	bool getImm(){
-		return imm;
-	}
+instructions :: instructions(){
+	; // default constructor
+}
+instructions :: instructions(string inst, string _op, int _rd, int _rn, int _op2, bool _imm){
+	fullInst = inst;
+	op = _op ;
+	rd = _rd ;
+	rn = _rn ;
+	operand2 = _op2 ;
+	imm = _imm ;
+}
+// getter functions
+string instructions :: getFullInst(){
+	return fullInst;
+}
+string instructions :: getOp(){
+	return op;
+}
+int instructions :: getRd(){
+	return rd;
+}
+int instructions :: getRn(){
+	return rn;
+}
+int instructions :: getOp2(){
+	return operand2;
+}
+bool instructions :: getImm(){
+	return imm;
+}
 	// setter functions
-	void setOp(string s){
-		op = s;
-	}
-	void setRd(int r){
-		rd = r;
-	}
-	void setRn(int r){
-		rn = r;
-	}
-	void setOp2(int r){
-		operand2 = r;
-	}
-};
+void instructions :: setOp(string s){
+	op = s;
+}
+void instructions :: setRd(int r){
+	rd = r;
+}
+void instructions :: setRn(int r){
+	rn = r;
+}
+void instructions :: setOp2(int r){
+	operand2 = r;
+}
 
 struct Label{
     string label_name;
