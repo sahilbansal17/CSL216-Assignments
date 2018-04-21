@@ -6,7 +6,7 @@ MAIN = a.out
 
 execute:
 	lex scanLatency.l && yacc -d parseLatency.y
-	$(CXX) main.cpp lex.yy.c y.tab.c $(CFLAGS) -o $(MAIN) -DDebug=0
+	$(CXX) main.cpp lex.yy.c y.tab.c statistics.cpp scan.cpp arm.cpp $(CFLAGS) -o $(MAIN) -DDebug=0
 	./$(MAIN) $(input)
 
 debug:

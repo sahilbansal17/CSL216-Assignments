@@ -1,3 +1,7 @@
+#include <vector> // used to create vectors
+#include <iostream> // used for input/output related utility functions
+using namespace std;
+
 // This class handles statistics of the instructions.
 class statistics{
 private:

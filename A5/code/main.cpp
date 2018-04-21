@@ -3,7 +3,6 @@
 #include <vector> // used to create vectors
 #include <fstream> // used for file handling
 #include <algorithm> // used for transforming string to lowercase
-#include "scan.h" // contains all the code to parse the instructions
 #include "arm.h" // contain all the code to execute all the arm related instructions
 using namespace std;
 
@@ -141,7 +140,7 @@ int main(int argc, char * argv[]){
     }
     else{
         myArm.allocate(data_labels); // to allocate memory to data labels
-        myArm.runMultiCycle(inst_vec); // to run the instructions
+        myArm.run(); // to run the instructions
     }
 
     // fout.close(); // to close the output file

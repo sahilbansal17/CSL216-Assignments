@@ -1,4 +1,6 @@
 #include "scan.h"
+#include <vector> // used to create vectors
+
 // This file contains all code relevant to parsing of the instructions and also the class named instructions,
 // structure named labels for storing label names and their addresses
 using namespace std;
@@ -47,20 +49,11 @@ void instructions :: setOp2(int r){
 	operand2 = r;
 }
 
-struct Label{
-    string label_name;
-    int addr;
-};
-
-struct data_Label{
-	string label_name;
-	int size;
-};
-
 vector <instructions> inst_vec; // vector of instructions class type object
 // used so that we need to rescan the entire instruction, rather storing it in a format
 
 string supportedInst[14]={"add", "sub", "mul", "mov", "ldr", "str", "cmp", "cmn", "bge", "b", "beq", "bne", "bl", "blt"};
+
 int numSupported = 14;
 
 vector <Label> labels; // to store the labels in the instructions

@@ -1,3 +1,8 @@
+#include "statistics.h"
+#include <vector> // used to create vectors
+#include <iostream> // used for input/output related utility functions
+
+using namespace std;
 // This class handles statistics of the instructions.
 int statistics :: find(string s){
     for(int i = 0; i < freqCounter.size(); i++){

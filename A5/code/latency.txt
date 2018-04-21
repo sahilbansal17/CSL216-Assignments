@@ -1,7 +1,6 @@
 ldr = 20;
-ldr_pseudo = 1;   # Instruction => LDR{condition} register,=[expression | label-expression]
+ldr_pseudo = 1;
 str = 20;
-str_pseudo = 1;
 add = 1;
 sub = 1;
 cmp = 1;

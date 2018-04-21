@@ -1,6 +1,11 @@
 #include "latency.h"
 // This file contains all code relevant to parsing of the instructions and also the class named instructions,
 // structure named labels for storing label names and their addresses
+#include <iostream> // used for input/output related utility functions
+#include <string> // used for strings
+#include <vector> // used to create vectors
+#include <fstream> // used for file handling
+#include <algorithm> // used for transforming string to lowercase
 using namespace std;
 
 class instructions{
@@ -19,7 +24,7 @@ public:
 	int getRd();
 	int getRn();
 	int getOp2();
-	bool getImm()
+	bool getImm();
 	// setter functions
 	void setOp(string s);
 	void setRd(int r);
@@ -37,15 +42,14 @@ struct data_Label{
 	int size;
 };
 
-string supportedInst[];
+extern vector <instructions> inst_vec; // vector of instructions class type object
+// used so that we need to rescan the entire instruction, rather storing it in a format
 
-vector <instructions> inst_vec;
+extern vector <Label> labels; // to store the labels in the instructions
 
-int numSupported;
+extern vector <data_Label> data_labels; // to store the data labels in the instructions
 
-vector <Label> labels;
-vector <data_Label> data_labels;
-vector <string> str_inst;
+extern vector <string> str_inst; // vector of instructions string type
 
 void ignoreSpaces(int &j, string s);
 
@@ -56,5 +60,5 @@ int checkValidOp(string op);
 int checkValidLabel(string label);
 int checkValidDataLabel(string label);
 int scanLabels();
-int scanMain();
+int scanMain(string file_name);
 int scanLatency();
