@@ -27,16 +27,15 @@ private:
         int rd;
         bool imm;
         string inst;
-		ID_EX(){pc=0;rn=0;operand2=0;rd=0;imm=false;inst="";}
+		ID_EX(){pc=1000;rn=0;operand2=0;rd=0;imm=false;inst="";}
     }ID_EX;
 
     struct EX_MEM{
-        int pc;
         int rd;
         int data;
         int rn;
         string inst;
-		EX_MEM(){pc=0;rn=0;data=0;rd=0;inst="";}
+		EX_MEM(){rn=0;data=0;rd=0;inst="";}
     }EX_MEM;
 
     struct MEM_WB{

@@ -130,7 +130,7 @@ int main(int argc, char * argv[]){
         cout << "Latency text file has errors. No further execution possible.\n";
         return 0;
     }
-    myArm.showLatencyData(); // shows the latency associated with each instruction
+    // myArm.showLatencyData(); // shows the latency associated with each instruction
 
     // now, if latency.txt has no errors, scan the input containing assembly code
     string file_name = argv[1];

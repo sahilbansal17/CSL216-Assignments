@@ -17,13 +17,13 @@ ARM :: ARM(){
 
 int ARM :: alu(string inst, int a, int b){
 	if(inst == "add"){
-		return a+b;
+		return a + b;
 	}
 	else if(inst == "sub"){
-		return a-b;
+		return a - b;
 	}
 	else if(inst == "mul"){
-		return a*b;
+		return a * b;
 	}
 	else{
 		return 0;
@@ -94,7 +94,7 @@ int ARM :: getC(){
 
 // display the contents of the register file and NZCV flags, also the memory
 void ARM :: display(instructions i, int count){
-	cout << "Inst No.: " << count << " => " << i.getFullInst() << "\n";
+	cout << "Cycle No.: " << count << " => " << i.getFullInst() << "\n";
 	cout << ".Registers -";
 	for(int j = 0; j < 16; j++){
 		printf("|r%d=%2d",j,r[j]);
@@ -115,47 +115,43 @@ void ARM :: display(instructions i, int count){
 }
 
 void ARM :: IF(){
-	IF_ID.pc += 4;
-	r[15] += 4;
-	if(IF_ID.pc < inst_vec.size()*4+1000){
-		IF_ID.i++;
+	if(IF_ID.pc == ID_EX.pc){
+		IF_ID.pc += 4;
+		r[15] = IF_ID.pc;
+	}
+	else{
+		IF_ID.pc = ID_EX.pc;
+		r[15] = IF_ID.pc;
+	}
+
+	if(IF_ID.pc < inst_vec.size()  * 4 + 1000){
+		IF_ID.i = (IF_ID.pc-1000)/4;
 	}
 }
 
 void ARM :: ID(){
+	// cout<<"Inside ID"<<endl;
 	ID_EX.pc = IF_ID.pc;
 	instructions temp = inst_vec[IF_ID.i];
 	ID_EX.rn = reg_file(temp.getRn());
 	ID_EX.rd = temp.getRd();
 	ID_EX.imm = temp.getImm();
-	if(ID_EX.imm){
+	ID_EX.inst = temp.getOp();
+	ID_EX.operand2 = temp.getOp2();
+
+	if(ID_EX.inst != "b" && ID_EX.inst != "bl" && ID_EX.inst != "bne" && ID_EX.inst != "beq" && ID_EX.inst != "blt" && ID_EX.inst != "bge"){
+		if(!ID_EX.imm){
+			ID_EX.operand2 = reg_file(ID_EX.operand2);
+		}
+	}
+
+	if(ID_EX.inst == "ldr_pseudo"){
 		ID_EX.operand2 = temp.getOp2();
 	}
-	else{
-		ID_EX.operand2 = reg_file(temp.getOp2());
-	}			
-	ID_EX.inst = temp.getOp();
-	if(ID_EX.inst=="ldr_pseudo"){
-		ID_EX.rd = dlAddress[ID_EX.operand2];
-	}
-	cout<<"RD is "<<ID_EX.rd<<endl;
-}
-
-void ARM :: EX(){
-	EX_MEM.pc = ID_EX.pc;
-	EX_MEM.rd = ID_EX.rd;
-	EX_MEM.rn = ID_EX.rn;
-	EX_MEM.inst = ID_EX.inst;
-	if(ID_EX.inst=="add"||ID_EX.inst=="sub"||ID_EX.inst=="mul"){
-		EX_MEM.data = alu(ID_EX.inst, ID_EX.rn, ID_EX.operand2);
-	}
-	else if(ID_EX.inst=="ldrImm"||ID_EX.inst=="ldrPre"||ID_EX.inst=="strImm"||ID_EX.inst=="strPre"){
-		EX_MEM.data = alu("add", ID_EX.rn, ID_EX.operand2);
-	}
-	else if(ID_EX.inst=="cmn"){
-		EX_MEM.data = alu("add", ID_EX.rn, ID_EX.operand2);
+	else if(ID_EX.inst == "cmn"){
+		int temp = ID_EX.rn + ID_EX.operand2;
 		// if one of them is negative and other is 0, then no carry
-		if(ID_EX.rn== 0 || ID_EX.operand2 == 0){
+		if(ID_EX.rn == 0 || ID_EX.operand2 == 0){
 			C = 0;
 		}
 		// else if either of them is negative and other is positive, or both negative then C = 1
@@ -166,17 +162,17 @@ void ARM :: EX(){
 		else{
 			C = 0;
 		}
-		if(EX_MEM.data < 0){
+		if(temp < 0){
 			N = 1;
 			Z = 0;
 		}
-		else if(EX_MEM.data == 0){
+		else if(temp == 0){
 			Z = 1;
 			N = 0;
 		}
 	}
-	else if(ID_EX.inst=="cmp"){
-		EX_MEM.data = alu("sub", ID_EX.rn, ID_EX.operand2);
+	else if(ID_EX.inst == "cmp"){		
+		int temp = ID_EX.rn - ID_EX.operand2;
 		if(ID_EX.rn >= 0 && ID_EX.operand2 <= 0){
 			// no borrow is taken in this case
 			C = 0;
@@ -193,67 +189,119 @@ void ARM :: EX(){
 			// if r[r2] is less than or equal to r[r1] then no borrow is taken
 			C = 1;
 		}
-		if(EX_MEM.data < 0){
+		if(temp < 0){
 			// if difference is less than 0 then N = 1
 			N = 1;
 			Z = 0;
 		}
-		else if(EX_MEM.data == 0){
+		else if(temp == 0){
 			// if difference is zero then Z = 0
 			Z = 1;
 			N = 0;
+		}		
+	}
+	else if(ID_EX.inst == "b"){
+		ID_EX.operand2 = temp.getOp2();		
+		ID_EX.pc = ID_EX.operand2;
+	}
+	else if(ID_EX.inst == "bl"){
+		ID_EX.operand2 = temp.getOp2();	
+		r[14] = r[15] + 4;
+		ID_EX.pc = ID_EX.operand2;
+	}
+	else if(ID_EX.inst == "beq"){
+		ID_EX.operand2 = temp.getOp2();	
+		if(Z == 1){
+			ID_EX.pc = ID_EX.operand2;
 		}
+	}
+	else if(ID_EX.inst == "bge"){
+		ID_EX.operand2 = temp.getOp2();	
+		if(N == 0){
+			ID_EX.pc = ID_EX.operand2;
+		}
+	}
+	else if(ID_EX.inst == "blt"){
+		ID_EX.operand2 = temp.getOp2();	
+		if(N == 1){
+			ID_EX.pc = ID_EX.operand2;
+		}
+	}
+	else if(ID_EX.inst == "bne"){
+		cout<<"BNE called"<<endl;
+		ID_EX.operand2 = temp.getOp2();	
+		if(Z == 0){
+			ID_EX.pc = ID_EX.operand2;
+		}
+	}
+	// cout<<"Outside ID"<<endl;
+}
+
+void ARM :: EX(){
+	EX_MEM.rd = ID_EX.rd;
+	EX_MEM.rn = ID_EX.rn;
+	EX_MEM.inst = ID_EX.inst;
+
+	if(ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst=="mul"){
+		EX_MEM.data = alu(ID_EX.inst, ID_EX.rn, ID_EX.operand2);		
+	}
+	else if(ID_EX.inst == "ldrImm" || ID_EX.inst == "ldrPre" || ID_EX.inst == "strImm" || ID_EX.inst == "strPre"){
+		EX_MEM.data = alu("add", ID_EX.rn, ID_EX.operand2);
+	}
+	else if(ID_EX.inst == "ldr_pseudo"){
+		EX_MEM.data = dlAddress[ID_EX.operand2];
+	}
+	else if(ID_EX.inst == "ldr" || ID_EX.inst == "str"){
+		EX_MEM.data = ID_EX.rn;
 	}
 	else{
 		if(ID_EX.imm){
-			EX_MEM.data=ID_EX.operand2;			
+			EX_MEM.data = ID_EX.operand2;			
 		}
 		else{
-			EX_MEM.data=ID_EX.rn;			
+			EX_MEM.data = ID_EX.rn;			
 		}
-		cout<<EX_MEM.inst<<" "<<ID_EX.rd;
 	}
 }
 
 void ARM :: MEM(){
 	MEM_WB.rd = EX_MEM.rd;
-	if(EX_MEM.inst=="ldr"||EX_MEM.inst=="ldrImm"||EX_MEM.inst=="ldrPre"||EX_MEM.inst=="ldr_pseudo"){
-		MEM_WB.data = memory[(EX_MEM.data-1000)/4];
+	if(EX_MEM.inst == "ldr" || EX_MEM.inst == "ldrImm" || EX_MEM.inst == "ldrPre"){
+		MEM_WB.data = memory[(EX_MEM.data - 1000) / 4];
 		MEM_WB.reg_write = 1;
 	}
-	else if(EX_MEM.inst=="str"||EX_MEM.inst=="strImm"||EX_MEM.inst=="strPre"||EX_MEM.inst=="str_pseudo"){
-		memory[(EX_MEM.data-1000)/4] = reg_file(EX_MEM.rd);
+	else if(EX_MEM.inst == "str" || EX_MEM.inst == "strImm" || EX_MEM.inst == "strPre" || EX_MEM.inst == "str_pseudo"){
+		memory[(EX_MEM.data - 1000) / 4] = reg_file(EX_MEM.rd);
 		MEM_WB.reg_write = 0;
 	}
-	else if(EX_MEM.inst=="add"||EX_MEM.inst=="sub"||EX_MEM.inst=="mul"||EX_MEM.inst=="mov"){
+	else if(EX_MEM.inst == "add" || EX_MEM.inst == "sub" || EX_MEM.inst == "mul" || EX_MEM.inst == "mov" || EX_MEM.inst == "ldr_pseudo"){
 		MEM_WB.reg_write = 1;
-		MEM_WB.data=EX_MEM.data;	
-		cout<<EX_MEM.inst<<" "<<EX_MEM.data<<" "<<EX_MEM.rd<<endl;			
+		MEM_WB.data = EX_MEM.data;			
 	}
 	else{
 		MEM_WB.reg_write = 0;
-		MEM_WB.data=0;		
+		MEM_WB.data = 0;		
 	}
 }
 
 void ARM :: WB(){
-	if(MEM_WB.reg_write==1){
-		r[MEM_WB.rd]=MEM_WB.data;
+	if(MEM_WB.reg_write == 1){
+		// cout << "Register" << MEM_WB.rd << "value" << MEM_WB.data << endl;		
+		r[MEM_WB.rd] = MEM_WB.data;
+		MEM_WB.reg_write = 0;
 	}
 }
 
 void ARM :: run(){
-	int count=0;
-	while(IF_ID.pc < inst_vec.size()*4+16+1000){
-		display(inst_vec[IF_ID.i],count);
-		count++;
-		// cout<<MEM_WB.rd<<" "<<MEM_WB.data<<" "<<MEM_WB.reg_write<<endl;
+	int cycle_count = 0;
+	while(IF_ID.pc < inst_vec.size() * 4 + 1016){
+		cycle_count++;
+		display(inst_vec[IF_ID.i], cycle_count);
 		WB();
 		MEM();
 		EX();
 		ID();
 		IF();
-		cout<<"ran"<<endl;
 	}
 }
 

@@ -245,7 +245,7 @@ int getRnOffset(int &j, string s, int &rn, int &offset){
     		j ++;
     	}
         res = stoi(res_s); // convert to integer
-        if(res >=0 && res <= 15){
+        if(res >= 0 && res <= 15){
         	ignoreSpaces(j, s);
         }
         else{
