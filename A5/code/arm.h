@@ -15,41 +15,52 @@ private:
 	statistics st;
 
 	struct IF_ID{
-        int pc;
-        int i;
-		IF_ID(){pc=1000;i=0;}
+        int PC;
+        int instructionIndex;
+		IF_ID(){
+			PC = 1000; instructionIndex = 0; // the beginning instruction of the program
+		}
     }IF_ID;
 
     struct ID_EX{
-        int pc;
-        int rn;
-        int operand2;
-        int rd;
-        bool imm;
+        int PC;
+        int rn; // first operand 
+        int operand2; // second operand 
+        int rd; // destination register 
+        bool imm; // whether immediate operand 
         string inst;
-		ID_EX(){pc=1000;rn=0;operand2=0;rd=0;imm=false;inst="";}
+		ID_EX(){
+			PC = 1000; rn = 0; operand2 = 0; rd = 0; imm = false; inst = "NULL";
+		}
     }ID_EX;
 
     struct EX_MEM{
-        int rd;
-        int data;
-        int rn;
+        int rd; // destination register 
+		int data; // result of the ALU operation:
+		/*	can be:
+			1. data to be stored to a register |
+			2. memory location for LDR 
+		*/
         string inst;
-		EX_MEM(){rn=0;data=0;rd=0;inst="";}
+		EX_MEM(){
+			data = 0; rd = 0; inst = "NULL";
+		}
     }EX_MEM;
 
     struct MEM_WB{
-        int data;
-        int rd;
-        int reg_write;
-		MEM_WB(){data=0;rd=0;reg_write=0;}
+        int data; // the data to be written to register
+        int rd; // the destination register or register whose data to be stored to memory
+        bool regWrite; // control signal for writing the register
+		MEM_WB(){
+			data = 0; rd = 0; regWrite = false;
+		}
     }MEM_WB;
 
 public:
 	ARM();
 	int alu(string inst, int a, int b);
 	void mem(string inst, int addr, int data);
-	int reg_file(int i);
+	int regAtIndex(int i);
 	int getLatency(string s);
 	void showLatencyData();
 	void allocate(vector<data_Label> data_labels);

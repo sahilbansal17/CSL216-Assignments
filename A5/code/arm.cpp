@@ -15,6 +15,7 @@ ARM :: ARM(){
 	N = 0; Z = 0; C = 0;
 }
 
+// to simulate the ALU hardware in the execute stage of the pipeline
 int ARM :: alu(string inst, int a, int b){
 	if(inst == "add"){
 		return a + b;
@@ -30,7 +31,8 @@ int ARM :: alu(string inst, int a, int b){
 	}
 }
 
-int ARM :: reg_file(int i){
+// returns contents of register at a particular index 
+int ARM :: regAtIndex(int i){
 	return r[i];
 }
 
@@ -114,41 +116,54 @@ void ARM :: display(instructions i, int count){
 	else cout << "NIL \n\n";
 }
 
+// to simulate the IF stage of the pipeline
+// updates the pipeline registers in the IF_ID structure 
 void ARM :: IF(){
-	if(IF_ID.pc == ID_EX.pc){
-		IF_ID.pc += 4;
-		r[15] = IF_ID.pc;
+	// if not a branch instruction, PC will remain same in both these stages
+	if(IF_ID.PC == ID_EX.PC){
+		IF_ID.PC += 4;
+		r[15] = IF_ID.PC;
+	} // else if branch instruction, PC will be updated to branch address in the EX stage
+	else{
+		IF_ID.PC = ID_EX.PC;
+		r[15] = IF_ID.PC;
+	}
+	
+	// if a valid instruction, then update its index
+	if(IF_ID.PC < inst_vec.size() * 4 + 1000){
+		IF_ID.instructionIndex = (IF_ID.PC - 1000)/4;
 	}
 	else{
-		IF_ID.pc = ID_EX.pc;
-		r[15] = IF_ID.pc;
-	}
-
-	if(IF_ID.pc < inst_vec.size()  * 4 + 1000){
-		IF_ID.i = (IF_ID.pc-1000)/4;
+		IF_ID.instructionIndex = -1; // so that will not propage through the next stages of the pipeline
 	}
 }
 
+// to simulate the ID stage of the pipeline 
 void ARM :: ID(){
-	// cout<<"Inside ID"<<endl;
-	ID_EX.pc = IF_ID.pc;
-	instructions temp = inst_vec[IF_ID.i];
-	ID_EX.rn = reg_file(temp.getRn());
+	// cout << "Inside ID\n" ;
+	
+	// input from the IF_ID pipeline register
+	ID_EX.PC = IF_ID.PC;
+	instructions temp = inst_vec[IF_ID.instructionIndex];
+	
+	// writing to the ID_EX pipeline registers 
+	ID_EX.rn = regAtIndex(temp.getRn());
 	ID_EX.rd = temp.getRd();
 	ID_EX.imm = temp.getImm();
 	ID_EX.inst = temp.getOp();
 	ID_EX.operand2 = temp.getOp2();
-
-	if(ID_EX.inst != "b" && ID_EX.inst != "bl" && ID_EX.inst != "bne" && ID_EX.inst != "beq" && ID_EX.inst != "blt" && ID_EX.inst != "bge"){
+	
+	// if not a branch instruction
+	if(ID_EX.inst[0] != 'b'){
+		// only if immediate operand exists, then the 2nd operand is in operand2
 		if(!ID_EX.imm){
-			ID_EX.operand2 = reg_file(ID_EX.operand2);
+			// since imm is false for a branch instruction that is why only for those which are not branch instructions
+			ID_EX.operand2 = regAtIndex(ID_EX.operand2);
 		}
-	}
-
-	if(ID_EX.inst == "ldr_pseudo"){
-		ID_EX.operand2 = temp.getOp2();
-	}
-	else if(ID_EX.inst == "cmn"){
+	}/* redundant: if(ID_EX.inst == "ldr_pseudo"){ ID_EX.operand2 = temp.getOp2();} */
+	
+	// compute result of compare instructions right in this stage of the pipeline
+	if(ID_EX.inst == "cmn"){
 		int temp = ID_EX.rn + ID_EX.operand2;
 		// if one of them is negative and other is 0, then no carry
 		if(ID_EX.rn == 0 || ID_EX.operand2 == 0){
@@ -162,6 +177,8 @@ void ARM :: ID(){
 		else{
 			C = 0;
 		}
+		
+		// raise N and Z flags appropriately
 		if(temp < 0){
 			N = 1;
 			Z = 0;
@@ -189,6 +206,8 @@ void ARM :: ID(){
 			// if r[r2] is less than or equal to r[r1] then no borrow is taken
 			C = 1;
 		}
+		
+		// raise N and Z flags appropriately
 		if(temp < 0){
 			// if difference is less than 0 then N = 1
 			N = 1;
@@ -199,64 +218,72 @@ void ARM :: ID(){
 			Z = 1;
 			N = 0;
 		}		
-	}
+	} // handle the branch instructions in the ID stage only =>
 	else if(ID_EX.inst == "b"){
 		ID_EX.operand2 = temp.getOp2();		
-		ID_EX.pc = ID_EX.operand2;
+		ID_EX.PC = ID_EX.operand2;
 	}
 	else if(ID_EX.inst == "bl"){
 		ID_EX.operand2 = temp.getOp2();	
-		r[14] = r[15] + 4;
-		ID_EX.pc = ID_EX.operand2;
+		r[14] = r[15] + 4; // update link register (lr)
+		ID_EX.PC = ID_EX.operand2;
 	}
 	else if(ID_EX.inst == "beq"){
 		ID_EX.operand2 = temp.getOp2();	
 		if(Z == 1){
-			ID_EX.pc = ID_EX.operand2;
+			ID_EX.PC = ID_EX.operand2;
 		}
 	}
 	else if(ID_EX.inst == "bge"){
 		ID_EX.operand2 = temp.getOp2();	
 		if(N == 0){
-			ID_EX.pc = ID_EX.operand2;
+			ID_EX.PC = ID_EX.operand2;
 		}
 	}
 	else if(ID_EX.inst == "blt"){
 		ID_EX.operand2 = temp.getOp2();	
 		if(N == 1){
-			ID_EX.pc = ID_EX.operand2;
+			ID_EX.PC = ID_EX.operand2;
 		}
 	}
 	else if(ID_EX.inst == "bne"){
-		cout<<"BNE called"<<endl;
+		// cout<< "BNE called\n" ;
 		ID_EX.operand2 = temp.getOp2();	
 		if(Z == 0){
-			ID_EX.pc = ID_EX.operand2;
+			ID_EX.PC = ID_EX.operand2;
 		}
 	}
-	// cout<<"Outside ID"<<endl;
+	// cout << "Outside ID\n" ;
 }
 
+// to simulate the EX stage of the pipeline
 void ARM :: EX(){
+	// input from the ID_EX pipeline register 
 	EX_MEM.rd = ID_EX.rd;
-	EX_MEM.rn = ID_EX.rn;
+	// EX_MEM.rn = ID_EX.rn; // not used 
 	EX_MEM.inst = ID_EX.inst;
-
-	if(ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst=="mul"){
+	
+	// writing to the EX_MEM pipeline registers 
+	
+	// if an Arithmetic instruction 
+	if(ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul"){
 		EX_MEM.data = alu(ID_EX.inst, ID_EX.rn, ID_EX.operand2);		
-	}
+	} // else if load/store with offset, imm or preOffset
 	else if(ID_EX.inst == "ldrImm" || ID_EX.inst == "ldrPre" || ID_EX.inst == "strImm" || ID_EX.inst == "strPre"){
-		EX_MEM.data = alu("add", ID_EX.rn, ID_EX.operand2);
-	}
+		EX_MEM.data = alu("add", ID_EX.rn, ID_EX.operand2); // call add instruction to get updated address to load/store
+		
+		// currently post offset is not implemented
+		
+	} // else if ldr_pseudo
 	else if(ID_EX.inst == "ldr_pseudo"){
 		EX_MEM.data = dlAddress[ID_EX.operand2];
-	}
+	} // else if normal ldr/str with no offset
 	else if(ID_EX.inst == "ldr" || ID_EX.inst == "str"){
 		EX_MEM.data = ID_EX.rn;
-	}
+	} // else for compare and branch type instructions, also for move 
 	else{
 		if(ID_EX.imm){
-			EX_MEM.data = ID_EX.operand2;			
+			EX_MEM.data = ID_EX.operand2;
 		}
 		else{
 			EX_MEM.data = ID_EX.rn;			
@@ -264,39 +291,54 @@ void ARM :: EX(){
 	}
 }
 
+// to simulate the MEM stage of the pipeline
 void ARM :: MEM(){
+	// input from the EX_MEM pipeline register 
 	MEM_WB.rd = EX_MEM.rd;
+	
+	/* 
+		if ldr instruction then load from memory 
+	 	else if str then store to memory
+		else if ALUinstruction then pass the data 
+		else do nothing
+	*/
 	if(EX_MEM.inst == "ldr" || EX_MEM.inst == "ldrImm" || EX_MEM.inst == "ldrPre"){
 		MEM_WB.data = memory[(EX_MEM.data - 1000) / 4];
-		MEM_WB.reg_write = 1;
+		MEM_WB.regWrite = true;
 	}
 	else if(EX_MEM.inst == "str" || EX_MEM.inst == "strImm" || EX_MEM.inst == "strPre" || EX_MEM.inst == "str_pseudo"){
-		memory[(EX_MEM.data - 1000) / 4] = reg_file(EX_MEM.rd);
-		MEM_WB.reg_write = 0;
+		// str_pseudo might not be handled rightly 
+		memory[(EX_MEM.data - 1000) / 4] = regAtIndex(EX_MEM.rd);
+		MEM_WB.regWrite = false;
 	}
 	else if(EX_MEM.inst == "add" || EX_MEM.inst == "sub" || EX_MEM.inst == "mul" || EX_MEM.inst == "mov" || EX_MEM.inst == "ldr_pseudo"){
-		MEM_WB.reg_write = 1;
+		// since data already loaded for ldr_pseudo
+		MEM_WB.regWrite = true;
 		MEM_WB.data = EX_MEM.data;			
 	}
 	else{
-		MEM_WB.reg_write = 0;
+		MEM_WB.regWrite = false;
 		MEM_WB.data = 0;		
 	}
 }
 
+// to simulate the WB stage of the pipeline
 void ARM :: WB(){
-	if(MEM_WB.reg_write == 1){
-		// cout << "Register" << MEM_WB.rd << "value" << MEM_WB.data << endl;		
+	// if regWrite is on, then write to the register
+	if(MEM_WB.regWrite == true){
+		// cout << "Register" << MEM_WB.rd << ", value" << MEM_WB.data << endl;		
 		r[MEM_WB.rd] = MEM_WB.data;
-		MEM_WB.reg_write = 0;
+		MEM_WB.regWrite = false;
 	}
 }
 
+// the main function to run the pipeline till the end of program
 void ARM :: run(){
 	int cycle_count = 0;
-	while(IF_ID.pc < inst_vec.size() * 4 + 1016){
-		cycle_count++;
-		display(inst_vec[IF_ID.i], cycle_count);
+	// extra 16 since additional 4 stages required for the completion of instructions at the end of pipeline
+	while(IF_ID.PC < inst_vec.size() * 4 + 1016){
+		cycle_count ++;
+		display(inst_vec[IF_ID.instructionIndex], cycle_count);
 		WB();
 		MEM();
 		EX();
@@ -305,75 +347,79 @@ void ARM :: run(){
 	}
 }
 
-// // to run the Multi Cycle version of the ARM Simulator
-// ARM :: void runMultiCycle(vector <instructions> inst_vec){
-// 	long int cycle_no = 1, inst_count = 1;
-// 	int inst_cycle, old, newPC;
-// 	int pointer = 0;
-// 	char c; // for debug mode
-// 	while(pointer != inst_vec.size()){
-// 		// till all the instructions are not executed
-// 		// get the no of clock cycles required to execute this instruction
-// 		string current_inst = inst_vec[pointer].getOp();
-// 		inst_cycle = getLatency(current_inst);
-// 		if(inst_cycle == -1){
-// 			return ; // since no latency defined for this kind of instruction
-// 		}
-// 		old = r[15];
-// 		newPC = r[15];
+/*
 
-// 		// expect user to enter \n in debug mode, executed cycle by cycle
-// 		if(Debug == 1){
-// 			cout << "Cycle " << cycle_no << ":\n";
-// 			cout << "Instruction has started. Before start: \n";
-// 			display(inst_vec[pointer], inst_count);
-// 			scanf("%c",&c);
-// 			while(inst_cycle--){
-// 				cycle_no ++;
-// 				if(inst_cycle){
-// 					cout << "Cycle " << cycle_no << ":\n";
-// 					cout << "Instruction in progress. " << inst_cycle << " more cycles to go.\n";
-// 					scanf("%c",&c);
-// 				}
-// 			}
-// 			cout << "Cycle " << cycle_no << ":\n";
-// 			cout << "Instruction has ended. Current status: \n";
+// to run the Multi Cycle version of the ARM Simulator
 
-// 			execute(inst_vec[pointer]); // execute the instruction
-// 			// handle PC for display
-// 			if(r[15] != old){
-// 				newPC = r[15]; // if PC has changed then store new value and
-// 				r[15] = old; // old value back to PC for display
-// 			}
-// 			display(inst_vec[pointer], inst_count ++);
-// 			scanf("%c",&c);
-// 		}
-// 		else{
-// 			// normal mode of execution
-// 			cout << "Cycle " << cycle_no << "-" << cycle_no + inst_cycle << "\n";
-// 			cycle_no += inst_cycle;
-// 			execute(inst_vec[pointer]); // execute the instruction
-// 			// handle PC for display
-// 			if(r[15] != old){
-// 				newPC = r[15]; // if PC has changed then store new value and
-// 				r[15] = old; // old value back to PC for display
-// 			}
-// 			display(inst_vec[pointer], inst_count++);
-// 		}
-// 		// handle PC and pointer to get next instruction address
-// 		r[15] = newPC;
-// 		if(r[15] != old){
-// 			// check whether pc is changed after the execution of instruction
-// 			pointer = (r[15] - 1000)/4; // update the pointer
-// 		}
-// 		else{
-// 			pointer ++; // if pointer = pc then increment pointer
-// 			r[15] += 4; // update PC
-// 		}
+ARM :: void runMultiCycle(vector <instructions> inst_vec){
+	long int cycle_no = 1, inst_count = 1;
+	int inst_cycle, old, newPC;
+	int pointer = 0;
+	char c; // for debug mode
+	while(pointer != inst_vec.size()){
+		// till all the instructions are not executed
+		// get the no of clock cycles required to execute this instruction
+		string current_inst = inst_vec[pointer].getOp();
+		inst_cycle = getLatency(current_inst);
+		if(inst_cycle == -1){
+			return ; // since no latency defined for this kind of instruction
+		}
+		old = r[15];
+		newPC = r[15];
 
-// 	}
-// 	cout << "\n";
-// 	st.setInstCount(inst_count - 1); // since it is incremented even after executing the last inst
-// 	st.setCycleCount(cycle_no - 1); // since it is always one more than the no of cycles executed 
-// 	st.display();
-// }
+		// expect user to enter \n in debug mode, executed cycle by cycle
+		if(Debug == 1){
+			cout << "Cycle " << cycle_no << ":\n";
+			cout << "Instruction has started. Before start: \n";
+			display(inst_vec[pointer], inst_count);
+			scanf("%c",&c);
+			while(inst_cycle--){
+				cycle_no ++;
+				if(inst_cycle){
+					cout << "Cycle " << cycle_no << ":\n";
+					cout << "Instruction in progress. " << inst_cycle << " more cycles to go.\n";
+					scanf("%c",&c);
+				}
+			}
+			cout << "Cycle " << cycle_no << ":\n";
+			cout << "Instruction has ended. Current status: \n";
+
+			execute(inst_vec[pointer]); // execute the instruction
+			// handle PC for display
+			if(r[15] != old){
+				newPC = r[15]; // if PC has changed then store new value and
+				r[15] = old; // old value back to PC for display
+			}
+			display(inst_vec[pointer], inst_count ++);
+			scanf("%c",&c);
+		}
+		else{
+			// normal mode of execution
+			cout << "Cycle " << cycle_no << "-" << cycle_no + inst_cycle << "\n";
+			cycle_no += inst_cycle;
+			execute(inst_vec[pointer]); // execute the instruction
+			// handle PC for display
+			if(r[15] != old){
+				newPC = r[15]; // if PC has changed then store new value and
+				r[15] = old; // old value back to PC for display
+			}
+			display(inst_vec[pointer], inst_count++);
+		}
+		// handle PC and pointer to get next instruction address
+		r[15] = newPC;
+		if(r[15] != old){
+			// check whether PC is changed after the execution of instruction
+			pointer = (r[15] - 1000)/4; // update the pointer
+		}
+		else{
+			pointer ++; // if pointer = PC then increment pointer
+			r[15] += 4; // update PC
+		}
+
+	}
+	cout << "\n";
+	st.setInstCount(inst_count - 1); // since it is incremented even after executing the last inst
+	st.setCycleCount(cycle_no - 1); // since it is always one more than the no of cycles executed 
+	st.display();
+}
+*/
