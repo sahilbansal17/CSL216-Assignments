@@ -167,6 +167,7 @@ void ARM :: ID(){
 		ID_EX.inst = "NONE";
 		ID_EX.operand2 = 0;
 		pipelinedInstructions[1] = "";
+		ID_EX.instructionIndex = -1;
 		return;
 	}
 	
@@ -287,6 +288,7 @@ void ARM :: ID(){
 	pipelinedInstructions[1].assign(inst_vec[ID_EX.instructionIndex].getFullInst());
 }
 
+// int counterEX = 0;
 // to simulate the EX stage of the pipeline
 void ARM :: EX(){
 	// input from the ID_EX pipeline register 
@@ -296,7 +298,9 @@ void ARM :: EX(){
 	EX_MEM.instructionIndex = ID_EX.instructionIndex;
 	// writing to the EX_MEM pipeline registers 
 	
-	if(EX_MEM.instructionIndex = -1){
+	// cout << counterEX << " " << EX_MEM.instructionIndex << "\n";
+	// counterEX ++; 
+	if(EX_MEM.instructionIndex == -1){
 		EX_MEM.data = 0;
 		pipelinedInstructions[2] = "";
 		return ;
@@ -336,7 +340,7 @@ void ARM :: MEM(){
 	// input from the EX_MEM pipeline register 
 	MEM_WB.rd = EX_MEM.rd;
 	MEM_WB.instructionIndex = EX_MEM.instructionIndex;
-	if(MEM_WB.instructionIndex = -1){
+	if(MEM_WB.instructionIndex == -1){
 		MEM_WB.data = 0;
 		MEM_WB.regWrite = false;
 		pipelinedInstructions[3] = "";
@@ -373,7 +377,7 @@ void ARM :: MEM(){
 
 // to simulate the WB stage of the pipeline
 void ARM :: WB(){
-	if(MEM_WB.instructionIndex = -1){
+	if(MEM_WB.instructionIndex == -1){
 		MEM_WB.regWrite = false;
 		pipelinedInstructions[4] = "";
 		return;
