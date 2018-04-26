@@ -27,10 +27,12 @@ private:
         int rn; // first operand 
         int operand2; // second operand 
         int rd; // destination register 
-        bool imm; // whether immediate operand 
+        bool imm; // whether immediate operand
+		int instructionIndex; 
         string inst;
 		ID_EX(){
 			PC = 1000; rn = 0; operand2 = 0; rd = 0; imm = false; inst = "NULL";
+			instructionIndex = -1;
 		}
     }ID_EX;
 
@@ -42,7 +44,9 @@ private:
 			2. memory location for LDR 
 		*/
         string inst;
+		int instructionIndex;
 		EX_MEM(){
+			instructionIndex = -1;
 			data = 0; rd = 0; inst = "NULL";
 		}
     }EX_MEM;
@@ -51,8 +55,10 @@ private:
         int data; // the data to be written to register
         int rd; // the destination register or register whose data to be stored to memory
         bool regWrite; // control signal for writing the register
+		int instructionIndex;
 		MEM_WB(){
 			data = 0; rd = 0; regWrite = false;
+			instructionIndex = -1;
 		}
     }MEM_WB;
 
@@ -64,7 +70,7 @@ public:
 	int getLatency(string s);
 	void showLatencyData();
 	void allocate(vector<data_Label> data_labels);
-    void display(instructions i, int count);
+    void display(int count);
 	void run();
     void IF();
     void ID();

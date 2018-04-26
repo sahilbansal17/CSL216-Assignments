@@ -94,9 +94,17 @@ int ARM :: getC(){
 	return C;
 }
 
+// to store the instructions in each stage of the pipeline
+string pipelinedInstructions[5]; 
+
 // display the contents of the register file and NZCV flags, also the memory
-void ARM :: display(instructions i, int count){
-	cout << "Cycle No.: " << count << " => " << i.getFullInst() << "\n";
+void ARM :: display(int count){
+	cout << "Cycle No.: " << count << " => \n";
+	cout << "IF : " << pipelinedInstructions[0] << "\n";
+	cout << "ID : " << pipelinedInstructions[1] << "\n";
+	cout << "EX : " << pipelinedInstructions[2] << "\n";
+	cout << "MEM: " << pipelinedInstructions[3] << "\n";
+	cout << "WB : " << pipelinedInstructions[4] << "\n";
 	cout << ".Registers -";
 	for(int j = 0; j < 16; j++){
 		printf("|r%d=%2d",j,r[j]);
@@ -136,6 +144,12 @@ void ARM :: IF(){
 	else{
 		IF_ID.instructionIndex = -1; // so that will not propage through the next stages of the pipeline
 	}
+	
+	// set the instruction in IF stage to be the instruction at this index 
+	if(IF_ID.instructionIndex != -1)
+		pipelinedInstructions[0].assign(inst_vec[IF_ID.instructionIndex].getFullInst());
+	else
+		pipelinedInstructions[0] = "";
 }
 
 // to simulate the ID stage of the pipeline 
@@ -145,6 +159,7 @@ void ARM :: ID(){
 	// input from the IF_ID pipeline register
 	ID_EX.PC = IF_ID.PC;
 	instructions temp = inst_vec[IF_ID.instructionIndex];
+	ID_EX.instructionIndex = IF_ID.instructionIndex;
 	
 	// writing to the ID_EX pipeline registers 
 	ID_EX.rn = regAtIndex(temp.getRn());
@@ -254,6 +269,13 @@ void ARM :: ID(){
 		}
 	}
 	// cout << "Outside ID\n" ;
+	
+	// set the instruction in ID stage to be the instruction at this index
+	// the instruction in IF stage previously will run in ID stage now
+	if(ID_EX.instructionIndex != -1)
+		pipelinedInstructions[1].assign(inst_vec[ID_EX.instructionIndex].getFullInst());
+	else
+		pipelinedInstructions[1] = "";
 }
 
 // to simulate the EX stage of the pipeline
@@ -262,7 +284,7 @@ void ARM :: EX(){
 	EX_MEM.rd = ID_EX.rd;
 	// EX_MEM.rn = ID_EX.rn; // not used 
 	EX_MEM.inst = ID_EX.inst;
-	
+	EX_MEM.instructionIndex = ID_EX.instructionIndex;
 	// writing to the EX_MEM pipeline registers 
 	
 	// if an Arithmetic instruction 
@@ -289,12 +311,19 @@ void ARM :: EX(){
 			EX_MEM.data = ID_EX.rn;			
 		}
 	}
+	// set the instruction in EX stage to be the instruction at this index 
+	// the instruction in ID stage previously will run in EX stage now
+	if(ID_EX.instructionIndex != -1)
+		pipelinedInstructions[2].assign(inst_vec[ID_EX.instructionIndex].getFullInst());
+	else
+		pipelinedInstructions[2] = "";
 }
 
 // to simulate the MEM stage of the pipeline
 void ARM :: MEM(){
 	// input from the EX_MEM pipeline register 
 	MEM_WB.rd = EX_MEM.rd;
+	MEM_WB.instructionIndex = EX_MEM.instructionIndex;
 	
 	/* 
 		if ldr instruction then load from memory 
@@ -320,6 +349,12 @@ void ARM :: MEM(){
 		MEM_WB.regWrite = false;
 		MEM_WB.data = 0;		
 	}
+	// set the instruction in MEM stage to be the instruction at this index 
+	// the instruction in EX stage previously will run in MEM stage now
+	if(EX_MEM.instructionIndex != -1)
+		pipelinedInstructions[3].assign(inst_vec[EX_MEM.instructionIndex].getFullInst());
+	else
+		pipelinedInstructions[3] = "";
 }
 
 // to simulate the WB stage of the pipeline
@@ -330,15 +365,22 @@ void ARM :: WB(){
 		r[MEM_WB.rd] = MEM_WB.data;
 		MEM_WB.regWrite = false;
 	}
+	// set the instruction in WB stage to be the instruction at this index 
+	// the instruction in MEM stage previously will run in WB stage now
+	if(MEM_WB.instructionIndex != -1)
+		pipelinedInstructions[4].assign(inst_vec[MEM_WB.instructionIndex].getFullInst());
+	else
+		pipelinedInstructions[4] = "";
 }
 
 // the main function to run the pipeline till the end of program
 void ARM :: run(){
 	int cycle_count = 0;
+	pipelinedInstructions[0].assign(inst_vec[0].getFullInst()); // starting instruction
 	// extra 16 since additional 4 stages required for the completion of instructions at the end of pipeline
 	while(IF_ID.PC < inst_vec.size() * 4 + 1016){
 		cycle_count ++;
-		display(inst_vec[IF_ID.instructionIndex], cycle_count);
+		display(cycle_count); // since instructions are now in pipelinedInstructions[]
 		WB();
 		MEM();
 		EX();
