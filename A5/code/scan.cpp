@@ -641,7 +641,15 @@ int scanMain(string file_name){
 	        inst_vec.push_back(instructions(str_inst[i], op, rd, rn, operand2, imm)); // push to the instructions class vector
 	    }
     	else if(op == "cmp" || op == "mov" || op == "cmn"){
-			rn = getRegisterValue(j, str_inst[i]);
+			// mov instruction always writes to r0 in pipeline since rd was always taken 0
+			if(op == "mov"){
+				rd = getRegisterValue(j, str_inst[i]);
+				rn = 0;
+			}
+			else{
+				rd = 0;
+				rn = getRegisterValue(j, str_inst[i]);	
+			}
 			if(rn == -1){
 				cout << "Instruction " << i+1 << ": Error in rn\n";
 				return -1;
@@ -651,7 +659,7 @@ int scanMain(string file_name){
 				cout << "Instruction " << i+1 << ": Error in operand2\n";
 	            return -1;
 			}
-			inst_vec.push_back(instructions(str_inst[i], op, 0, rn, operand2, imm)); // rd not needed
+			inst_vec.push_back(instructions(str_inst[i], op, rd, rn, operand2, imm)); // rd not needed
 		}
 		else if(op == "str" || op == "ldr"){
 			// get rd
