@@ -5,7 +5,7 @@ CFLAGS = -std=c++11 -w
 MAIN = a.out
 
 execute:
-	# lex scanLatency.l && yacc -d parseLatency.y
+	lex scanLatency.l && yacc -d parseLatency.y
 	$(CXX) main.cpp lex.yy.c y.tab.c statistics.cpp scan.cpp arm.cpp $(CFLAGS) -o $(MAIN) -DDebug=0
 	./$(MAIN) $(input)
 

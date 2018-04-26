@@ -158,6 +158,18 @@ void ARM :: ID(){
 	
 	// input from the IF_ID pipeline register
 	ID_EX.PC = IF_ID.PC;
+	// after the last instruction has been fetched, IF_ID.instructionIndex will be -1
+	// so getting value from a negative index raises error bad_alloc
+	if(IF_ID.instructionIndex == -1){
+		ID_EX.rn = 0; 
+		ID_EX.rd = 0;
+		ID_EX.imm = 0;
+		ID_EX.inst = "NONE";
+		ID_EX.operand2 = 0;
+		pipelinedInstructions[1] = "";
+		return;
+	}
+	
 	instructions temp = inst_vec[IF_ID.instructionIndex];
 	ID_EX.instructionIndex = IF_ID.instructionIndex;
 	
@@ -167,7 +179,7 @@ void ARM :: ID(){
 	ID_EX.imm = temp.getImm();
 	ID_EX.inst = temp.getOp();
 	ID_EX.operand2 = temp.getOp2();
-	
+
 	// if not a branch instruction
 	if(ID_EX.inst[0] != 'b'){
 		// only if immediate operand exists, then the 2nd operand is in operand2
@@ -272,10 +284,7 @@ void ARM :: ID(){
 	
 	// set the instruction in ID stage to be the instruction at this index
 	// the instruction in IF stage previously will run in ID stage now
-	if(ID_EX.instructionIndex != -1)
-		pipelinedInstructions[1].assign(inst_vec[ID_EX.instructionIndex].getFullInst());
-	else
-		pipelinedInstructions[1] = "";
+	pipelinedInstructions[1].assign(inst_vec[ID_EX.instructionIndex].getFullInst());
 }
 
 // to simulate the EX stage of the pipeline
@@ -287,6 +296,12 @@ void ARM :: EX(){
 	EX_MEM.instructionIndex = ID_EX.instructionIndex;
 	// writing to the EX_MEM pipeline registers 
 	
+	if(EX_MEM.instructionIndex = -1){
+		EX_MEM.data = 0;
+		pipelinedInstructions[2] = "";
+		return ;
+	}
+
 	// if an Arithmetic instruction 
 	if(ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul"){
 		EX_MEM.data = alu(ID_EX.inst, ID_EX.rn, ID_EX.operand2);		
@@ -313,10 +328,7 @@ void ARM :: EX(){
 	}
 	// set the instruction in EX stage to be the instruction at this index 
 	// the instruction in ID stage previously will run in EX stage now
-	if(ID_EX.instructionIndex != -1)
-		pipelinedInstructions[2].assign(inst_vec[ID_EX.instructionIndex].getFullInst());
-	else
-		pipelinedInstructions[2] = "";
+	pipelinedInstructions[2].assign(inst_vec[ID_EX.instructionIndex].getFullInst());
 }
 
 // to simulate the MEM stage of the pipeline
@@ -324,7 +336,12 @@ void ARM :: MEM(){
 	// input from the EX_MEM pipeline register 
 	MEM_WB.rd = EX_MEM.rd;
 	MEM_WB.instructionIndex = EX_MEM.instructionIndex;
-	
+	if(MEM_WB.instructionIndex = -1){
+		MEM_WB.data = 0;
+		MEM_WB.regWrite = false;
+		pipelinedInstructions[3] = "";
+		return;
+	}	
 	/* 
 		if ldr instruction then load from memory 
 	 	else if str then store to memory
@@ -351,14 +368,17 @@ void ARM :: MEM(){
 	}
 	// set the instruction in MEM stage to be the instruction at this index 
 	// the instruction in EX stage previously will run in MEM stage now
-	if(EX_MEM.instructionIndex != -1)
-		pipelinedInstructions[3].assign(inst_vec[EX_MEM.instructionIndex].getFullInst());
-	else
-		pipelinedInstructions[3] = "";
+	pipelinedInstructions[3].assign(inst_vec[EX_MEM.instructionIndex].getFullInst());
 }
 
 // to simulate the WB stage of the pipeline
 void ARM :: WB(){
+	if(MEM_WB.instructionIndex = -1){
+		MEM_WB.regWrite = false;
+		pipelinedInstructions[4] = "";
+		return;
+	}
+	
 	// if regWrite is on, then write to the register
 	if(MEM_WB.regWrite == true){
 		// cout << "Register" << MEM_WB.rd << ", value" << MEM_WB.data << endl;		
@@ -367,15 +387,16 @@ void ARM :: WB(){
 	}
 	// set the instruction in WB stage to be the instruction at this index 
 	// the instruction in MEM stage previously will run in WB stage now
-	if(MEM_WB.instructionIndex != -1)
-		pipelinedInstructions[4].assign(inst_vec[MEM_WB.instructionIndex].getFullInst());
-	else
-		pipelinedInstructions[4] = "";
+	pipelinedInstructions[4].assign(inst_vec[MEM_WB.instructionIndex].getFullInst());
 }
 
 // the main function to run the pipeline till the end of program
 void ARM :: run(){
 	int cycle_count = 0;
+	if(inst_vec.size() == 0){
+		cout << "\nNo instructions in the pipeline. \n";
+		return;
+	}
 	pipelinedInstructions[0].assign(inst_vec[0].getFullInst()); // starting instruction
 	// extra 16 since additional 4 stages required for the completion of instructions at the end of pipeline
 	while(IF_ID.PC < inst_vec.size() * 4 + 1016){
