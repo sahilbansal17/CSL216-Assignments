@@ -1,5 +1,4 @@
 #include "scan.h"
-#include <vector> // used to create vectors
 
 // This file contains all code relevant to parsing of the instructions and also the class named instructions,
 // structure named labels for storing label names and their addresses

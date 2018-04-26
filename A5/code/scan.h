@@ -42,6 +42,11 @@ struct data_Label{
 	int size;
 };
 
+/*
+string supportedInst[];
+int numSupported;
+*/
+
 extern vector <instructions> inst_vec; // vector of instructions class type object
 // used so that we need to rescan the entire instruction, rather storing it in a format
 
