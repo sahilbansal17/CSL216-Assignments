@@ -727,7 +727,7 @@ int scanMain(string file_name){
 					return -1;
 				}
 				// cout << dlIndex << "\n";
-				inst_vec.push_back(instructions(str_inst[i], op, rd, 0, dlIndex, 0)); // rn, imm not needed
+				inst_vec.push_back(instructions(str_inst[i], op, rd, -1, dlIndex, 0)); // rn, imm not needed
 			}
 			else{
 				cout << "Instruction " << i+1 << ": Not a valid "<< op << " instruction.\n";

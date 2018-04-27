@@ -127,6 +127,19 @@ void ARM :: display(int count){
 // to simulate the IF stage of the pipeline
 // updates the pipeline registers in the IF_ID structure 
 void ARM :: IF(){
+
+	if(IF_ID.PC < inst_vec.size() * 4 + 996){	// checking if not the last instruction 
+		string str = ID_EX.inst;	// taking the instruction of the next pipeline
+		instructions temp = inst_vec[(IF_ID.PC - 1000)/4 + 1];
+		if((str == "ldr" || str == "ldrImm" || str == "ldr_pseudo" || str == "ldrPre")){			// only regWrite inst are allowed
+			if((ID_EX.rd == temp.getRn()) || (EX_MEM.rd == temp.getOp2() && !temp.getImm())){		// comapring the dest. register value with the current registers 
+				IF_ID.instructionIndex = -2;	// instruction index -2 indicates stalling of the pipeline
+				pipelinedInstructions[0] = "Bubble";	// inserting Bubble in the pipeline
+				return;
+			}
+		}
+	}
+	
 	// if not a branch instruction, PC will remain same in both these stages
 	if(IF_ID.PC == ID_EX.PC){
 		IF_ID.PC += 4;
@@ -146,10 +159,10 @@ void ARM :: IF(){
 	}
 	
 	// set the instruction in IF stage to be the instruction at this index 
-	if(IF_ID.instructionIndex != -1)
-		pipelinedInstructions[0].assign(inst_vec[IF_ID.instructionIndex].getFullInst());
-	else
+	if(IF_ID.instructionIndex == -1)
 		pipelinedInstructions[0] = "";
+	else
+		pipelinedInstructions[0].assign(inst_vec[IF_ID.instructionIndex].getFullInst());
 }
 
 // to simulate the ID stage of the pipeline 
@@ -159,7 +172,7 @@ void ARM :: ID(){
 	// input from the IF_ID pipeline register
 	ID_EX.PC = IF_ID.PC;
 	// after the last instruction has been fetched, IF_ID.instructionIndex will be -1
-	// so getting value from a negative index raises error bad_alloc
+	// so getting value from a negative index raises error bad_alloc	
 	if(IF_ID.instructionIndex == -1){
 		ID_EX.rn = 0; 
 		ID_EX.rd = 0;
@@ -170,6 +183,17 @@ void ARM :: ID(){
 		ID_EX.instructionIndex = -1;
 		return;
 	}
+	else if(IF_ID.instructionIndex == -2){
+		ID_EX.rn = 0; 
+		ID_EX.rd = 0;
+		ID_EX.imm = 0;
+		ID_EX.inst = "NONE";
+		ID_EX.operand2 = 0;
+		pipelinedInstructions[1] = "Bubble";
+		ID_EX.instructionIndex = -2;
+		return;
+	}
+	
 	
 	instructions temp = inst_vec[IF_ID.instructionIndex];
 	ID_EX.instructionIndex = IF_ID.instructionIndex;
@@ -182,14 +206,38 @@ void ARM :: ID(){
 	ID_EX.operand2 = temp.getOp2();
 
 	// if not a branch instruction
-	if(ID_EX.inst[0] != 'b'){
+	if(ID_EX.inst[0] != 'b' && ID_EX.inst != "ldr_pseudo"){
 		// only if immediate operand exists, then the 2nd operand is in operand2
 		if(!ID_EX.imm){
 			// since imm is false for a branch instruction that is why only for those which are not branch instructions
 			ID_EX.operand2 = regAtIndex(ID_EX.operand2);
 		}
-	}/* redundant: if(ID_EX.inst == "ldr_pseudo"){ ID_EX.operand2 = temp.getOp2();} */
-	
+	}
+
+	// first checking the data hazard MEM/WB.RegisterRd = ID/EX.RegisterRn1
+	if(MEM_WB.instructionIndex != -1){
+		string str = inst_vec[MEM_WB.instructionIndex].getOp();	// taking the instruction of the next pipeline
+		if((str == "ldr" || str == "ldrImm" || str == "ldr_pseudo" || str == "ldrPre" || str == "add" || str == "sub" || str == "mul" || str == "mov")){	// only regWrite inst are allowed
+			if(MEM_WB.rd == temp.getRn()){		// comapring the dest register value with the current rn 
+				ID_EX.rn = MEM_WB.data;				
+			}
+			if(MEM_WB.rd == temp.getOp2() && !ID_EX.imm){	// comapring the dest register value with the current operand2
+				ID_EX.operand2 = MEM_WB.data;				
+			}
+		}
+	}
+
+	string str = EX_MEM.inst; // taking the instruction of the next pipeline
+	if((str == "add" || str == "sub" || str == "mul" || str == "mov") && ID_EX.inst != "ldr_pseudo"){
+		// only regWrite inst are allowed and their cannot occur any data hazard in ldr pseudo
+		// but as the index of datalabel and register can be same it was causing unnecessary forwarding 
+		if(EX_MEM.rd == temp.getRn()){			// comparing the destination register value with the current rn 
+			ID_EX.rn = EX_MEM.data;			
+		}
+		if(EX_MEM.rd == temp.getOp2() && !ID_EX.imm){		// comparing the destination register value with the current operand2
+			ID_EX.operand2 = EX_MEM.data;			
+		}
+	}
 	// compute result of compare instructions right in this stage of the pipeline
 	if(ID_EX.inst == "cmn"){
 		int temp = ID_EX.rn + ID_EX.operand2;
@@ -305,6 +353,11 @@ void ARM :: EX(){
 		pipelinedInstructions[2] = "";
 		return ;
 	}
+	else if(EX_MEM.instructionIndex == -2){
+		EX_MEM.data = 0;
+		pipelinedInstructions[2] = "Bubble";
+		return ;
+	}
 
 	// if an Arithmetic instruction 
 	if(ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul"){
@@ -315,8 +368,8 @@ void ARM :: EX(){
 		
 		// currently post offset is not implemented
 		
-	} // else if ldr_pseudo
-	else if(ID_EX.inst == "ldr_pseudo"){
+	} // else if ldr_pseudo or str_pseudo
+	else if(ID_EX.inst == "ldr_pseudo" || ID_EX.inst == "str_pseudo" ){
 		EX_MEM.data = dlAddress[ID_EX.operand2];
 	} // else if normal ldr/str with no offset
 	else if(ID_EX.inst == "ldr" || ID_EX.inst == "str"){
@@ -345,7 +398,13 @@ void ARM :: MEM(){
 		MEM_WB.regWrite = false;
 		pipelinedInstructions[3] = "";
 		return;
-	}	
+	}
+	else if(MEM_WB.instructionIndex == -2){
+		MEM_WB.data = 0;
+		MEM_WB.regWrite = false;
+		pipelinedInstructions[3] = "Bubble";
+		return;
+	}		
 	/* 
 		if ldr instruction then load from memory 
 	 	else if str then store to memory
@@ -356,8 +415,7 @@ void ARM :: MEM(){
 		MEM_WB.data = memory[(EX_MEM.data - 1000) / 4];
 		MEM_WB.regWrite = true;
 	}
-	else if(EX_MEM.inst == "str" || EX_MEM.inst == "strImm" || EX_MEM.inst == "strPre" || EX_MEM.inst == "str_pseudo"){
-		// str_pseudo might not be handled rightly 
+	else if(EX_MEM.inst == "str" || EX_MEM.inst == "strImm" || EX_MEM.inst == "strPre"){
 		memory[(EX_MEM.data - 1000) / 4] = regAtIndex(EX_MEM.rd);
 		MEM_WB.regWrite = false;
 	}
@@ -365,6 +423,10 @@ void ARM :: MEM(){
 		// since data already loaded for ldr_pseudo
 		MEM_WB.regWrite = true;
 		MEM_WB.data = EX_MEM.data;			
+	}
+	else if(EX_MEM.inst == "str_pseudo"){
+		memory[EX_MEM.data] = regAtIndex(EX_MEM.rd);
+		MEM_WB.regWrite = false;
 	}
 	else{
 		MEM_WB.regWrite = false;
@@ -380,6 +442,11 @@ void ARM :: WB(){
 	if(MEM_WB.instructionIndex == -1){
 		MEM_WB.regWrite = false;
 		pipelinedInstructions[4] = "";
+		return;
+	}
+	else if(MEM_WB.instructionIndex == -2){
+		MEM_WB.regWrite = false;
+		pipelinedInstructions[4] = "Bubble";
 		return;
 	}
 	
