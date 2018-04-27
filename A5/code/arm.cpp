@@ -128,10 +128,11 @@ void ARM :: display(int count){
 // updates the pipeline registers in the IF_ID structure 
 void ARM :: IF(){
 
+	// dealing the LOAD-USE DATA HAZARD
 	if(IF_ID.PC < inst_vec.size() * 4 + 996){	// checking if not the last instruction 
-		string str = ID_EX.inst;	// taking the instruction of the next pipeline
-		instructions temp = inst_vec[(IF_ID.PC - 1000)/4 + 1];
-		if((str == "ldr" || str == "ldrImm" || str == "ldr_pseudo" || str == "ldrPre")){			// only regWrite inst are allowed
+		string s = ID_EX.inst;	// the instruction which was fetched in the previous clock cycle 
+		instructions temp = inst_vec[(IF_ID.PC - 1000)/4 + 1]; // current instruction in the IF stage 
+		if((s == "ldr" || s == "ldrImm" || s == "ldr_pseudo" || s == "ldrPre")){			// only regWrite inst are allowed
 			if((ID_EX.rd == temp.getRn()) || (EX_MEM.rd == temp.getOp2() && !temp.getImm())){		// comapring the dest. register value with the current registers 
 				IF_ID.instructionIndex = -2;	// instruction index -2 indicates stalling of the pipeline
 				pipelinedInstructions[0] = "Bubble";	// inserting Bubble in the pipeline
@@ -174,6 +175,7 @@ void ARM :: ID(){
 	// after the last instruction has been fetched, IF_ID.instructionIndex will be -1
 	// so getting value from a negative index raises error bad_alloc	
 	if(IF_ID.instructionIndex == -1){
+		// no instruction in pipeline 
 		ID_EX.rn = 0; 
 		ID_EX.rd = 0;
 		ID_EX.imm = 0;
@@ -184,6 +186,7 @@ void ARM :: ID(){
 		return;
 	}
 	else if(IF_ID.instructionIndex == -2){
+		// bubble in the pipeline 
 		ID_EX.rn = 0; 
 		ID_EX.rd = 0;
 		ID_EX.imm = 0;
@@ -193,7 +196,6 @@ void ARM :: ID(){
 		ID_EX.instructionIndex = -2;
 		return;
 	}
-	
 	
 	instructions temp = inst_vec[IF_ID.instructionIndex];
 	ID_EX.instructionIndex = IF_ID.instructionIndex;
@@ -214,10 +216,10 @@ void ARM :: ID(){
 		}
 	}
 
-	// first checking the data hazard MEM/WB.RegisterRd = ID/EX.RegisterRn1
+	// first handling the data hazard (MEM): MEM/WB.RegisterRd = ID/EX.RegisterRn1
 	if(MEM_WB.instructionIndex != -1){
-		string str = inst_vec[MEM_WB.instructionIndex].getOp();	// taking the instruction of the next pipeline
-		if((str == "ldr" || str == "ldrImm" || str == "ldr_pseudo" || str == "ldrPre" || str == "add" || str == "sub" || str == "mul" || str == "mov")){	// only regWrite inst are allowed
+		string s = inst_vec[MEM_WB.instructionIndex].getOp();	// the instruction which was fetcehd two cycles before
+		if((s == "ldr" || s == "ldrImm" || s == "ldr_pseudo" || s == "ldrPre" || s == "add" || s == "sub" || s == "mul" || s == "mov")){	// only regWrite inst are allowed
 			if(MEM_WB.rd == temp.getRn()){		// comapring the dest register value with the current rn 
 				ID_EX.rn = MEM_WB.data;				
 			}
@@ -226,11 +228,11 @@ void ARM :: ID(){
 			}
 		}
 	}
-
+	// now handling the data hazard (EX): EX/MEM.RegisterRd = ID/EX.RegisterRn1
 	string str = EX_MEM.inst; // taking the instruction of the next pipeline
 	if((str == "add" || str == "sub" || str == "mul" || str == "mov") && ID_EX.inst != "ldr_pseudo"){
 		// only regWrite inst are allowed and their cannot occur any data hazard in ldr pseudo
-		// but as the index of datalabel and register can be same it was causing unnecessary forwarding 
+		// but as the index of datalabel and register can be same, it was causing unnecessary forwarding in case of ldr_pseudo
 		if(EX_MEM.rd == temp.getRn()){			// comparing the destination register value with the current rn 
 			ID_EX.rn = EX_MEM.data;			
 		}
