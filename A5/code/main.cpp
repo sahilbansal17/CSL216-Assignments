@@ -24,13 +24,21 @@ int main(int argc, char * argv[]){
     // now, if latency.txt has no errors, scan the input containing assembly code
     string file_name = argv[1];
     status = scanMain(file_name); // used to scan the input and create an instructions vector
+    clock_t start, end;
+    double msecs;
     if(status == -1){
         cout << "\nTerminating...";
     }
     else{
         myArm.allocate(data_labels); // to allocate memory to data labels
+        start = clock();
         myArm.run(); // to run the instructions
+        end = clock();
+        msecs = ((double) (end - start)) * 1000 / CLOCKS_PER_SEC;
+        if(Debug == 0)
+            myArm.st.setExecutionTime(msecs);
     }
+    myArm.st.display();
 
     // fout.close(); // to close the output file
     return 0;

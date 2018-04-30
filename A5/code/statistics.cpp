@@ -25,23 +25,32 @@ void statistics :: counter(string op){
 }
 // display the list of instructions called along with their frequency
 void statistics :: display(){
-    cout << "Program Statistics : \n\n";
+    FILE *fp; // to write output to the file
+    fp = fopen("statistics.txt", "w"); // specify the output file
+    fprintf(fp,"Program Statistics : \n\n");
     // frequency of each instruction
     for(int i = 0; i < freqCounter.size(); i++){
-        printf("Instruction %10s is called %10d time",freqCounter[i].inst.c_str(), freqCounter[i].count);
+        fprintf(fp, "Instruction %10s is called %10d time",freqCounter[i].inst.c_str(), freqCounter[i].count);
         if(freqCounter[i].count > 1){
-            cout << "s.\n";
+            fprintf(fp, "s.\n");
         }
         else{
-            cout << ".\n";
+            fprintf(fp, ".\n");
         }
     }
-    IPC = double(instCount)/double(cycleCount);
-    CPI = 1.0/IPC;
-    printf("\nTotal %5s no. %5s of %5s Instructions %5s called = %64d\n", "", "", "", "", instCount);
-    printf("Total %5s no. %5s of %5s clock cycles %5s taken  = %64d\n", "", "", "", "", cycleCount);
-    printf("IPC (Average no. of Instructions per Cycle) %12s = %64f\n", "", IPC);
-    printf("CPI (Average no. of Cycles per Instruction) %12s = %64f\n", "", CPI);
+    CPI = 1 + (4 + cycleCount) / instCount;
+    IPC = 1 / CPI;
+    fprintf(fp, "\nTotal %5s no. %5s of %5s Instructions %5s called = %64d\n", "", "", "", "", instCount);
+    fprintf(fp, "Total %5s no. %5s of %5s clock cycles %5s taken  = %64d\n", "", "", "", "", cycleCount);
+    fprintf(fp, "Total %5s no. %5s of %5s stalls %15s    = %64d\n","", "", "", "",stallCount);
+    fprintf(fp, "Stalls per instruction  %32s = %64f\n","",(double)stallCount / (double)instCount);
+    fprintf(fp, "IPC (Average no. of Instructions per Cycle) %12s = %64f\n", "", IPC);
+    fprintf(fp, "CPI (Average no. of Cycles per Instruction) %12s = %64f\n", "", CPI);
+    if(Debug == 0){
+        fprintf(fp, "Program Execution Time (milliseconds) %18s = %64f\n","",executionTime);
+        fprintf(fp, "Avg value of MIPS %38s = %64f\n ","",instCount / (executionTime * 1000));
+    }
+    fclose(fp); // to close the output file    
 }
 // set the instruction count after the execution of all the instructions
 void statistics :: setInstCount(long int ct){
@@ -49,4 +58,10 @@ void statistics :: setInstCount(long int ct){
 }
 void statistics :: setCycleCount(long int ct){
     cycleCount = ct;
+}
+void statistics :: setExecutionTime(double ct){
+    executionTime = ct;
+}
+void statistics :: setStallCount(long int ct){
+    stallCount = ct;
 }

@@ -13,6 +13,8 @@ ARM :: ARM(){
 	}
 	startAddress = 1000;
 	N = 0; Z = 0; C = 0;
+	instructionCount = 0;
+	stallCount = 0;
 }
 
 // to simulate the ALU hardware in the execute stage of the pipeline
@@ -127,6 +129,37 @@ void ARM :: display(int count){
 	else cout << "NIL \n\n";
 }
 
+// display the contents of the register file and NZCV flags, also the memory
+void ARM :: writefile(FILE *fp, int count){
+
+	fprintf(fp, "Cycle No.: %d => \n",count);
+	fprintf(fp, "IF : %s\n", pipelinedInstructions[0].c_str());
+	fprintf(fp, "ID : %s\n", pipelinedInstructions[1].c_str());
+	fprintf(fp, "EX : %s\n", pipelinedInstructions[2].c_str());
+	fprintf(fp, "MEM : %s\n",pipelinedInstructions[3].c_str());
+	fprintf(fp, "WB : %s\n", pipelinedInstructions[4].c_str());
+	fprintf(fp, ".Registers -");
+
+	for(int j = 0; j < 13; j++){
+		fprintf(fp, "|r%d=%2d",j,r[j]);
+	}
+	fprintf(fp, "|SP=%2d",r[13]);
+	fprintf(fp, "|LR=%2d",r[14]);
+	fprintf(fp, "|PC=%2d",r[15]);
+	fprintf(fp, "|\n");
+	fprintf(fp, ".Flags -");
+	fprintf(fp, "N :%d| Z :%d| C: %d|\n",getN(),getZ(),getC());
+	fprintf(fp, ".Memory Filled - ");
+	int memoryNull = 1;
+	for(int j = 0; j < 100 ; j++){
+		if(memory[j] != 0){
+			memoryNull = 0;
+			fprintf(fp, "|(%d)=%2d",j*4+1000,memory[j]);
+		}
+	}
+	if(!memoryNull) fprintf(fp, "|\n\n");
+	else fprintf(fp, "NIL \n\n");
+}
 // to simulate the IF stage of the pipeline
 // updates the pipeline registers in the IF_ID structure 
 void ARM :: IF(){
@@ -154,6 +187,7 @@ void ARM :: IF(){
 				if((ID_EX.rd == temp.getRn()) || (ID_EX.rd == temp.getOp2() && !temp.getImm())){		// comapring the dest. register value with the current registers 
 					IF_ID.instructionIndex = -2;	// instruction index -2 indicates stalling of the pipeline
 					pipelinedInstructions[0] = "Bubble";	// inserting Bubble in the pipeline
+					stallCount++;
 					return;
 				}
 			}
@@ -194,6 +228,7 @@ void ARM :: IF(){
 	else if(IF_ID.latency_value > 1){
 		IF_ID.instructionIndex = -3;	// instruction index -3 indicates stalling of the pipeline due to latency hazard
 		pipelinedInstructions[0] = "Bubble due to latency";	// inserting Bubble in the pipeline
+		stallCount++;
 	}	
 	// cout<<"Outside IF\n";
 	
@@ -574,7 +609,8 @@ void ARM :: WB(){
 		pipelinedInstructions[4] = "Bubble";
 		return;
 	}
-	
+	instructionCount++;
+	st.counter(inst_vec[MEM_WB.instructionIndex].getOp());
 	// if regWrite is on, then write to the register
 	if(MEM_WB.regWrite == true){
 		// cout << "Register" << MEM_WB.rd << ", value" << MEM_WB.data << endl;		
@@ -592,6 +628,10 @@ void ARM :: WB(){
 
 // the main function to run the pipeline till the end of program
 void ARM :: run(){
+	FILE *fp;
+	if(Debug == 0){
+		fp = fopen("result.txt","w");
+	}
 	int cycle_count = 0;
 	if(inst_vec.size() == 0){
 		cout << "\nNo instructions in the pipeline. \n";
@@ -601,7 +641,10 @@ void ARM :: run(){
 	// extra 16 since additional 4 stages required for the completion of instructions at the end of pipeline
 	while(IF_ID.PC < inst_vec.size() * 4 + 1016){
 		cycle_count ++;
-		display(cycle_count); // since instructions are now in pipelinedInstructions[]
+		if(Debug == 1)
+			display(cycle_count); // since instructions are now in pipelinedInstructions[]
+		else 
+			writefile(fp, cycle_count);
 		if(Debug == 1){
 			char c;
 			scanf("%c",&c);
@@ -618,6 +661,10 @@ void ARM :: run(){
 		IF();
 		// cout << "NEXT" << "\n";
 	}
+	st.setCycleCount(cycle_count);
+	st.setInstCount(instructionCount);
+	st.setStallCount(stallCount);
+	if(Debug == 0)	fclose(fp);
 }
 
 /*

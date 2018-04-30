@@ -12,7 +12,8 @@ private:
 	int Z; // zero Flag
 	int C; // carry Flag
 	vector <int> dlAddress; // to store data label addresses while allocating memory
-	statistics st;
+	int instructionCount;
+	int stallCount;
 
 	struct IF_ID{
         int PC;
@@ -71,6 +72,7 @@ private:
     }MEM_WB;
 
 public:
+	statistics st;
 	ARM();
 	int alu(string inst, int a, int b);
 	void mem(string inst, int addr, int data);
@@ -79,6 +81,7 @@ public:
 	void showLatencyData();
 	void allocate(vector<data_Label> data_labels);
     void display(int count);
+	void writefile(FILE *fp, int count);
 	void run();
     void IF();
     void ID();
