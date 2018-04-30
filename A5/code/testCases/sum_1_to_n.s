@@ -24,5 +24,5 @@ LoadAddIntegers:
 
 	b exit
 
-AA:	.space 400
+AA:	.space 100
 exit:

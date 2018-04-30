@@ -1,18 +1,18 @@
-ldr = 5;
-ldr_pseudo = 5;
-str = 5;
+ldr = 1;
+ldr_pseudo = 1;
+str = 1;
 
-add = 3;
+add = 1;
 sub = 1;
-mul = 5;
-mov = 2;
+mul = 1;
+mov = 1;
 
 cmp = 1;
 cmn = 1;
 
-bne = 2;
-bge = 2;
-b = 2;
-bl = 2;
-beq = 2;
-blt = 2;
+bne = 1;
+bge = 1;
+b = 1;
+bl = 1;
+beq = 1;
+blt = 1;

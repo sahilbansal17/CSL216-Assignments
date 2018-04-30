@@ -1,5 +1,5 @@
 main:
-mov r0, #4
+mov r0, #5
 bl fact
 b exit  
 fact:

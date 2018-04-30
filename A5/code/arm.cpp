@@ -157,13 +157,19 @@ void ARM :: IF(){
 		}
 		
 		// if not a branch instruction, PC will remain same in both these stages
-		if(IF_ID.PC == ID_EX.PC){
+		if(IF_ID.PC == ID_EX.PC && IF_ID.PC == r[15]){
 			IF_ID.PC += 4;
 			r[15] = IF_ID.PC;
 		} // else if branch instruction, PC will be updated to branch address in the EX stage
 		else{
-			IF_ID.PC = ID_EX.PC;
-			r[15] = IF_ID.PC;
+			if(IF_ID.PC != ID_EX.PC){
+				IF_ID.PC = ID_EX.PC;
+				r[15] = IF_ID.PC;
+			}
+			else if(IF_ID.PC != r[15]){
+				// if PC updated due to a mov kind of instruction
+				IF_ID.PC = r[15];
+			}
 		}
 		
 		// if a valid instruction, then update its index
@@ -359,6 +365,11 @@ void ARM :: ID(){
 				ID_EX.PC = ID_EX.operand2;
 			}
 		}
+		else if(ID_EX.inst == "mov" && ID_EX.rd == 15){
+			// if mov pc type instruction
+			ID_EX.PC = ID_EX.operand2;
+			ID_EX.rd = -1;
+		}
 		// cout << "Outside ID\n" ;
 		
 		// set the instruction in ID stage to be the instruction at this index
@@ -428,7 +439,10 @@ void ARM :: EX(){
 		} // else if normal ldr/str with no offset
 		else if(ID_EX.inst == "ldr" || ID_EX.inst == "str"){
 			EX_MEM.data = ID_EX.rn;
-		} // else for compare and branch type instructions, also for move 
+		} // for move 
+		else if(ID_EX.inst == "mov"){
+			EX_MEM.data = ID_EX.operand2;
+		} // else for compare and branch type instructions
 		else{
 			if(ID_EX.imm){
 				EX_MEM.data = ID_EX.operand2;
@@ -546,7 +560,10 @@ void ARM :: WB(){
 	// if regWrite is on, then write to the register
 	if(MEM_WB.regWrite == true){
 		// cout << "Register" << MEM_WB.rd << ", value" << MEM_WB.data << endl;		
-		r[MEM_WB.rd] = MEM_WB.data;
+		if(MEM_WB.rd >= 0){
+			// to especially handle mov pc type instructions
+			r[MEM_WB.rd] = MEM_WB.data;
+		}
 		MEM_WB.regWrite = false;
 	}
 	// set the instruction in WB stage to be the instruction at this index 
