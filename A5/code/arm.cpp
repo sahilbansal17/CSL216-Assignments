@@ -106,9 +106,12 @@ void ARM :: display(int count){
 	cout << "MEM: " << pipelinedInstructions[3] << "\n";
 	cout << "WB : " << pipelinedInstructions[4] << "\n";
 	cout << ".Registers -";
-	for(int j = 0; j < 16; j++){
+	for(int j = 0; j < 13; j++){
 		printf("|r%d=%2d",j,r[j]);
 	}
+	printf("|SP=%2d",r[13]);
+	printf("|LR=%2d",r[14]);
+	printf("|PC=%2d",r[15]);
 	cout << "|\n";
 	cout << ".Flags -";
 	cout << " N :" << getN() << "| " << "Z :" << getZ() << "| " << "C :" << getC() << "|\n";
