@@ -279,6 +279,7 @@ void ARM :: ID(){
 		}
 		// compute result of compare instructions right in this stage of the pipeline
 		if(ID_EX.inst == "cmn"){
+			C = 0; N = 0; Z = 0; // initialize flags
 			int temp = ID_EX.rn + ID_EX.operand2;
 			// if one of them is negative and other is 0, then no carry
 			if(ID_EX.rn == 0 || ID_EX.operand2 == 0){
@@ -305,6 +306,7 @@ void ARM :: ID(){
 		}
 		else if(ID_EX.inst == "cmp"){		
 			int temp = ID_EX.rn - ID_EX.operand2;
+			C = 0; N = 0; Z = 0; // initialize flags, got bug running array.s
 			if(ID_EX.rn >= 0 && ID_EX.operand2 <= 0){
 				// no borrow is taken in this case
 				C = 0;
