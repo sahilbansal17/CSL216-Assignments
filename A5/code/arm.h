@@ -62,8 +62,10 @@ private:
         bool regWrite; // control signal for writing the register
 		int instructionIndex;
 		int latency_value;
+		int instOnHalt;
 		MEM_WB(){
 			data = 0; rd = 0; regWrite = false;
+			instOnHalt = -1;
 			instructionIndex = -1; latency_value = 1;
 		}
     }MEM_WB;

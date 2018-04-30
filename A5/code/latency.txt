@@ -1,4 +1,4 @@
-ldr = 20;
+ldr = 5;
 ldr_pseudo = 5;
 str = 5;
 

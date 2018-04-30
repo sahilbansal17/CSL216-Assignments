@@ -455,8 +455,24 @@ void ARM :: MEM(){
 	// input from the EX_MEM pipeline register
 	MEM_WB.latency_value = EX_MEM.latency_value;
 	if(MEM_WB.latency_value == 1){
+		MEM_WB.instOnHalt = EX_MEM.instructionIndex; // get the correct instruction
+	}
+
+	if(ID_EX.instructionIndex == -3 && (EX_MEM.inst == "ldr" || EX_MEM.inst == "ldrPre" || EX_MEM.inst == "ldr_pseudo" || EX_MEM.inst == "str")){
+		pipelinedInstructions[3].assign(inst_vec[MEM_WB.instOnHalt].getFullInst() + " [Cycles Left: " + to_string(MEM_WB.latency_value - 1) + "]");
+		MEM_WB.instructionIndex = -1;
+		return;	
+	}
+	else if(ID_EX.instructionIndex != -3 && (EX_MEM.inst == "ldr" || EX_MEM.inst == "ldrPre" || EX_MEM.inst == "ldr_pseudo" || EX_MEM.inst == "str")){
+		MEM_WB.latency_value = 1;
+	}
+	cout<<"Reached\n";
+	
+
+	if(MEM_WB.latency_value == 1){
+		cout<<"Normally started MEM\n";
 		MEM_WB.rd = EX_MEM.rd;
-		MEM_WB.instructionIndex = EX_MEM.instructionIndex;
+		MEM_WB.instructionIndex = MEM_WB.instOnHalt;
 		if(MEM_WB.instructionIndex == -1){
 			MEM_WB.data = 0;
 			MEM_WB.regWrite = false;
@@ -499,7 +515,13 @@ void ARM :: MEM(){
 		// set the instruction in MEM stage to be the instruction at this index 
 		// the instruction in EX stage previously will run in MEM stage now
 		pipelinedInstructions[3].assign(inst_vec[EX_MEM.instructionIndex].getFullInst());
-	} 
+		MEM_WB.instOnHalt = -1;
+		cout<<"Normally ended MEM\n";		
+	}
+	else{
+		EX_MEM.instructionIndex = -3;	// instruction index -3 indicates stalling of the pipeline due to latency
+		pipelinedInstructions[3] = "Bubble due to latency";	// inserting Bubble in the pipeline
+	}
 }
 
 // to simulate the WB stage of the pipeline
@@ -544,17 +566,17 @@ void ARM :: run(){
 			char c;
 			scanf("%c",&c);
 		}
-		// cout << "WB" << "\n";
+		cout << "WB" << "\n";
 		WB();
-		// cout << "MEM" << "\n";
+		cout << "MEM" << "\n";
 		MEM();
-		// cout << "EX" << "\n";
+		cout << "EX" << "\n";
 		EX();
-		// cout << "ID" << "\n";
+		cout << "ID" << "\n";
 		ID();
-		// cout << "IF" << "\n";
+		cout << "IF" << "\n";
 		IF();
-		// cout << "NEXT" << "\n";
+		cout << "NEXT" << "\n";
 	}
 }
 
