@@ -148,7 +148,7 @@ void ARM :: IF(){
 			string s = ID_EX.inst;	// the instruction which was fetched in the previous clock cycle 
 			instructions temp = inst_vec[(IF_ID.PC - 1000)/4 + 1]; // current instruction in the IF stage 
 			if((s == "ldr" || s == "ldrImm" || s == "ldr_pseudo" || s == "ldrPre")){			// only regWrite inst are allowed
-				if((ID_EX.rd == temp.getRn()) || (EX_MEM.rd == temp.getOp2() && !temp.getImm())){		// comapring the dest. register value with the current registers 
+				if((ID_EX.rd == temp.getRn()) || (ID_EX.rd == temp.getOp2() && !temp.getImm())){		// comapring the dest. register value with the current registers 
 					IF_ID.instructionIndex = -2;	// instruction index -2 indicates stalling of the pipeline
 					pipelinedInstructions[0] = "Bubble";	// inserting Bubble in the pipeline
 					return;
