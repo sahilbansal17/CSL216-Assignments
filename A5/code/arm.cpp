@@ -184,7 +184,7 @@ void ARM :: IF(){
 	}
 	else if(IF_ID.latency_value > 1){
 		IF_ID.instructionIndex = -3;	// instruction index -3 indicates stalling of the pipeline due to latency hazard
-		pipelinedInstructions[0] = "Bubble";	// inserting Bubble in the pipeline
+		pipelinedInstructions[0] = "Bubble due to latency";	// inserting Bubble in the pipeline
 	}	
 	// cout<<"Outside IF\n";
 	
@@ -367,7 +367,7 @@ void ARM :: ID(){
 	}
 	else{
 		ID_EX.instructionIndex = -3;	// instruction index -3 indicates stalling of the pipeline due to latency
-		pipelinedInstructions[1] = "Bubble";	// inserting Bubble in the pipeline
+		pipelinedInstructions[1] = "Bubble due to latency";	// inserting Bubble in the pipeline
 	}	
 }
 
@@ -381,12 +381,12 @@ void ARM :: EX(){
 		EX_MEM.instOnHalt = ID_EX.instructionIndex; // get the correct instruction
 	}
 
-	if(IF_ID.instructionIndex == -3 && (ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul")){
-		pipelinedInstructions[2].assign(inst_vec[EX_MEM.instOnHalt].getFullInst());
+	if(IF_ID.instructionIndex == -3 && (ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul" || ID_EX.inst == "mov")){
+		pipelinedInstructions[2].assign(inst_vec[EX_MEM.instOnHalt].getFullInst() + " [Cycles Left: " + to_string(EX_MEM.latency_value - 1) + "]");
 		EX_MEM.instructionIndex = -1;
 		return;	
 	}
-	else if(IF_ID.instructionIndex != -3 && (ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul")){
+	else if(IF_ID.instructionIndex != -3 && (ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul" || ID_EX.inst == "mov")){
 		EX_MEM.latency_value = 1;
 	}
 	if(EX_MEM.latency_value == 1){
@@ -446,7 +446,7 @@ void ARM :: EX(){
 	}
 	else{
 		ID_EX.instructionIndex = -3;	// instruction index -3 indicates stalling of the pipeline due to latency
-		pipelinedInstructions[1] = "Bubble";	// inserting Bubble in the pipeline
+		pipelinedInstructions[2] = "Bubble due to latency";	// inserting Bubble in the pipeline
 	}
 }
 
@@ -540,6 +540,10 @@ void ARM :: run(){
 	while(IF_ID.PC < inst_vec.size() * 4 + 1016){
 		cycle_count ++;
 		display(cycle_count); // since instructions are now in pipelinedInstructions[]
+		if(Debug == 1){
+			char c;
+			scanf("%c",&c);
+		}
 		// cout << "WB" << "\n";
 		WB();
 		// cout << "MEM" << "\n";
