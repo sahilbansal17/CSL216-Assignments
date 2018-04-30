@@ -127,16 +127,19 @@ void ARM :: display(int count){
 // to simulate the IF stage of the pipeline
 // updates the pipeline registers in the IF_ID structure 
 void ARM :: IF(){
+	// cout<<"Inside IF\n";
 
-	if(IF_ID.instructionIndex != -2 && IF_ID.instructionIndex != -3){
+	if(IF_ID.instructionIndex >= 0){
 		// if not a bubble then only fetch the instruction and get the latency value
 		instructions temp = inst_vec[IF_ID.instructionIndex];
 		IF_ID.latency_value = getLatency(temp.getOp()); // getting latency of the previous instruction
 	}
-	else{
+	else if(IF_ID.instructionIndex == -3){
 		IF_ID.latency_value --;		
 	}
-	
+	else{
+		IF_ID.latency_value = 1;
+	}
 	// Fetching next instruction if latency_value = 1
 	if(IF_ID.latency_value == 1){
 
@@ -183,6 +186,8 @@ void ARM :: IF(){
 		IF_ID.instructionIndex = -3;	// instruction index -3 indicates stalling of the pipeline due to latency hazard
 		pipelinedInstructions[0] = "Bubble";	// inserting Bubble in the pipeline
 	}	
+	// cout<<"Outside IF\n";
+	
 }
 
 // to simulate the ID stage of the pipeline 
@@ -194,6 +199,8 @@ void ARM :: ID(){
 		ID_EX.PC = IF_ID.PC;
 		// after the last instruction has been fetched, IF_ID.instructionIndex will be -1
 		// so getting value from a negative index raises error bad_alloc	
+		// cout<<"Between Id 1\n";
+		
 		if(IF_ID.instructionIndex == -1){
 			// no instruction in pipeline 
 			ID_EX.rn = 0; 
@@ -217,6 +224,7 @@ void ARM :: ID(){
 			ID_EX.instructionIndex = -2;
 			return;
 		}
+		// cout<<"Between Id 2\n";
 		
 		instructions temp = inst_vec[IF_ID.instructionIndex];
 		ID_EX.instructionIndex = IF_ID.instructionIndex;
@@ -227,7 +235,6 @@ void ARM :: ID(){
 		ID_EX.imm = temp.getImm();
 		ID_EX.inst = temp.getOp();
 		ID_EX.operand2 = temp.getOp2();
-
 		// if not a branch instruction
 		if(ID_EX.inst[0] != 'b' && ID_EX.inst != "ldr_pseudo"){
 			// only if immediate operand exists, then the 2nd operand is in operand2
@@ -369,13 +376,14 @@ void ARM :: ID(){
 
 void ARM :: EX(){
 	EX_MEM.latency_value = ID_EX.latency_value;
-	
+	// cout << "LV:" << EX_MEM.latency_value << "\n";
 	if(EX_MEM.latency_value == 1){
 		EX_MEM.instOnHalt = ID_EX.instructionIndex; // get the correct instruction
 	}
 
 	if(IF_ID.instructionIndex == -3 && (ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul")){
 		pipelinedInstructions[2].assign(inst_vec[EX_MEM.instOnHalt].getFullInst());
+		EX_MEM.instructionIndex = -1;
 		return;	
 	}
 	else if(IF_ID.instructionIndex != -3 && (ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul")){
@@ -383,7 +391,7 @@ void ARM :: EX(){
 	}
 	if(EX_MEM.latency_value == 1){
 		// not stalled due to latency 
-		cout<<"Normally passed\n";
+		// cout<<"Normally passed\n";
 		// input from the ID_EX pipeline register 
 		EX_MEM.rd = ID_EX.rd;
 		// EX_MEM.rn = ID_EX.rn; // not used 
@@ -432,6 +440,9 @@ void ARM :: EX(){
 		// set the instruction in EX stage to be the instruction at this index 
 		// the instruction in ID stage previously will run in EX stage now
 		pipelinedInstructions[2].assign(inst_vec[EX_MEM.instructionIndex].getFullInst());
+		EX_MEM.instOnHalt = -1;
+
+		// cout << "Normally exited.\n";
 	}
 	else{
 		ID_EX.instructionIndex = -3;	// instruction index -3 indicates stalling of the pipeline due to latency
@@ -493,6 +504,7 @@ void ARM :: MEM(){
 
 // to simulate the WB stage of the pipeline
 void ARM :: WB(){
+	// cout << "WB started.\n";
 	if(MEM_WB.instructionIndex == -1){
 		MEM_WB.regWrite = false;
 		pipelinedInstructions[4] = "";
@@ -513,6 +525,7 @@ void ARM :: WB(){
 	// set the instruction in WB stage to be the instruction at this index 
 	// the instruction in MEM stage previously will run in WB stage now
 	pipelinedInstructions[4].assign(inst_vec[MEM_WB.instructionIndex].getFullInst());
+	// cout << "WB ended.\n";
 }
 
 // the main function to run the pipeline till the end of program
@@ -527,11 +540,17 @@ void ARM :: run(){
 	while(IF_ID.PC < inst_vec.size() * 4 + 1016){
 		cycle_count ++;
 		display(cycle_count); // since instructions are now in pipelinedInstructions[]
+		// cout << "WB" << "\n";
 		WB();
+		// cout << "MEM" << "\n";
 		MEM();
+		// cout << "EX" << "\n";
 		EX();
+		// cout << "ID" << "\n";
 		ID();
+		// cout << "IF" << "\n";
 		IF();
+		// cout << "NEXT" << "\n";
 	}
 }
 
