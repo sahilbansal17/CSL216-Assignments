@@ -393,7 +393,14 @@ void ARM :: EX(){
 	}
 
 	if(IF_ID.instructionIndex == -3 && (ID_EX.inst == "add" || ID_EX.inst == "sub" || ID_EX.inst == "mul" || ID_EX.inst == "mov")){
-		pipelinedInstructions[2].assign(inst_vec[EX_MEM.instOnHalt].getFullInst() + " [Cycles Left: " + to_string(EX_MEM.latency_value - 1) + "]");
+		if(EX_MEM.latency_value == 1){
+			int latency = getLatency(ID_EX.inst);
+			pipelinedInstructions[2].assign(inst_vec[EX_MEM.instOnHalt].getFullInst() + " [Cycles Left: " + to_string(latency) + "]");
+		}
+		else{
+			pipelinedInstructions[2].assign(inst_vec[EX_MEM.instOnHalt].getFullInst() + " [Cycles Left: " + to_string(EX_MEM.latency_value - 1) + "]");
+		}
+		
 		EX_MEM.instructionIndex = -1;
 		return;	
 	}
@@ -474,7 +481,13 @@ void ARM :: MEM(){
 
 	if(ID_EX.instructionIndex == -3 && (EX_MEM.inst == "ldr" || EX_MEM.inst == "ldrPre" || EX_MEM.inst == "ldr_pseudo" || EX_MEM.inst == "str")){
 		if(MEM_WB.instOnHalt != -1){
-			pipelinedInstructions[3].assign(inst_vec[MEM_WB.instOnHalt].getFullInst() + " [Cycles Left: " + to_string(MEM_WB.latency_value - 1) + "]");
+			if(MEM_WB.latency_value == 1){
+				int latency = getLatency(EX_MEM.inst);
+				pipelinedInstructions[3].assign(inst_vec[MEM_WB.instOnHalt].getFullInst() + " [Cycles Left: " + to_string(latency) + "]");
+			}
+			else{
+				pipelinedInstructions[3].assign(inst_vec[MEM_WB.instOnHalt].getFullInst() + " [Cycles Left: " + to_string(MEM_WB.latency_value - 1) + "]");
+			}
 		}
 		else{
 			pipelinedInstructions[3] = "";

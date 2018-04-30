@@ -1,8 +1,8 @@
-ldr = 1;
-ldr_pseudo = 1;
+ldr = 20;
+ldr_pseudo = 10;
 str = 1;
 
-add = 1;
+add = 5;
 sub = 1;
 mul = 1;
 mov = 1;
