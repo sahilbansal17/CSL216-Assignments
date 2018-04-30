@@ -17,8 +17,9 @@ private:
 	struct IF_ID{
         int PC;
         int instructionIndex;
+		int latency_value;
 		IF_ID(){
-			PC = 1000; instructionIndex = 0; // the beginning instruction of the program
+			PC = 1000; instructionIndex = 0; latency_value = 1;// the beginning instruction of the program
 		}
     }IF_ID;
 
@@ -30,9 +31,10 @@ private:
         bool imm; // whether immediate operand
 		int instructionIndex; 
         string inst;
+		int latency_value;
 		ID_EX(){
 			PC = 1000; rn = 0; operand2 = 0; rd = 0; imm = false; inst = "NULL";
-			instructionIndex = -1;
+			instructionIndex = -1; latency_value = 1;
 		}
     }ID_EX;
 
@@ -45,9 +47,12 @@ private:
 		*/
         string inst;
 		int instructionIndex;
+		int instOnHalt;
+		int latency_value;
 		EX_MEM(){
 			instructionIndex = -1;
-			data = 0; rd = 0; inst = "NULL";
+			instOnHalt = -1;
+			data = 0; rd = 0; inst = "NULL"; latency_value = 1;
 		}
     }EX_MEM;
 
@@ -56,9 +61,10 @@ private:
         int rd; // the destination register or register whose data to be stored to memory
         bool regWrite; // control signal for writing the register
 		int instructionIndex;
+		int latency_value;
 		MEM_WB(){
 			data = 0; rd = 0; regWrite = false;
-			instructionIndex = -1;
+			instructionIndex = -1; latency_value = 1;
 		}
     }MEM_WB;
 
